@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -27,7 +28,7 @@ export function AssistantClient() {
     const { data, error } = await supabase.functions.invoke('study-assistant-chat', { body: { message: question } });
     setBusy(false);
     if (error) {
-      toast('The assistant is unavailable — is ANTHROPIC_API_KEY configured?');
+      toast(await functionErrorMessage(error));
       return;
     }
     setMessages((m) => [...m, { role: 'assistant', text: data.answer, sources: data.sources }]);

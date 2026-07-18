@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export type ProductRow = {
   id: string;
@@ -85,7 +86,7 @@ export function BillingClient({
       if (data?.error) throw new Error(data.error);
       window.location.href = data.checkout_url;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not start checkout');
+      toast(await functionErrorMessage(err));
       setPendingId(null);
     }
   }

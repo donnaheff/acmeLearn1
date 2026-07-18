@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 type Ticket = {
   id: string;
@@ -29,7 +30,7 @@ export function SupportAdminClient({ tickets }: { tickets: Ticket[] }) {
     const { data, error } = await supabase.functions.invoke('suggest-ticket-reply', { body: { ticket_id: id } });
     setBusyId(null);
     if (error) {
-      toast('Could not generate a reply — is ANTHROPIC_API_KEY configured?');
+      toast(await functionErrorMessage(error));
       return;
     }
     setDrafts((d) => ({ ...d, [id]: data.reply }));

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export type Order = {
   id: string;
@@ -45,7 +46,7 @@ export function ReceiptsClient({ orders }: { orders: Order[] }) {
       toast(data?.message || 'Refund request submitted for eligibility review.');
       setReason('');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not submit refund request');
+      toast(await functionErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

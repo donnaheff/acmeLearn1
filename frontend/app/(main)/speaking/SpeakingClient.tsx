@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 const QUESTION = 'Describe a skill you would like to learn.';
 
@@ -150,7 +151,7 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
     const { error } = await supabase.functions.invoke('transcribe-speaking-attempt', { body: { attempt_id: id } });
     if (!silent) setAnalyzingId(null);
     if (error) {
-      if (!silent) toast('Automatic transcription unavailable — type a transcript instead, or check OPENAI_API_KEY is configured.');
+      if (!silent) toast(await functionErrorMessage(error));
       return;
     }
     if (!silent) toast('Transcribed — ready for instant AI feedback.');
@@ -164,7 +165,7 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
     });
     setAnalyzingId(null);
     if (error) {
-      toast('Could not generate feedback — add a transcript, or check ANTHROPIC_API_KEY is configured.');
+      toast(await functionErrorMessage(error));
       return;
     }
     toast('Instant AI feedback ready below.');

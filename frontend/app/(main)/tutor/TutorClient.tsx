@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export function StartHostLectureButton({ lectureId }: { lectureId: string | null }) {
   const supabase = useSupabase();
@@ -19,7 +20,7 @@ export function StartHostLectureButton({ lectureId }: { lectureId: string | null
     setLabel('Authorising host…');
     const { data, error } = await supabase.functions.invoke('get-host-access', { body: { lecture_id: lectureId } });
     if (error) {
-      toast(error.message);
+      toast(await functionErrorMessage(error));
       setLabel('Start lecture →');
       setBusy(false);
       return;

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export function PrivacyControls({ profileId, email }: { profileId: string; email: string }) {
   const supabase = useSupabase();
@@ -22,7 +23,7 @@ export function PrivacyControls({ profileId, email }: { profileId: string; email
       a.download = 'acmelearn-data-export.json';
       a.click();
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not export your data');
+      toast(await functionErrorMessage(e));
     } finally {
       setExporting(false);
     }
@@ -41,7 +42,7 @@ export function PrivacyControls({ profileId, email }: { profileId: string; email
       router.push('/');
       router.refresh();
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not delete your account');
+      toast(await functionErrorMessage(e));
       setDeleting(false);
     }
   }

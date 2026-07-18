@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 import type { Profile } from '@/lib/session';
 
 type Article = {
@@ -136,7 +137,7 @@ export function ArticleEditor({ profile, article }: { profile: Profile; article:
     });
     setAiBusy(false);
     if (error) {
-      toast('AI drafting failed — is ANTHROPIC_API_KEY configured?');
+      toast(await functionErrorMessage(error));
       return;
     }
     if (data?.title) handleTitleChange(data.title);

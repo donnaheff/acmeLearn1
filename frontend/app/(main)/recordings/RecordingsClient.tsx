@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export type Recording = {
   id: string;
@@ -27,7 +28,7 @@ function WatchButton({ recording }: { recording: Recording }) {
       if (!data?.url) throw new Error(data?.message || 'Recording unavailable');
       location.href = data.url;
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Recording unavailable');
+      toast(await functionErrorMessage(e));
       setBusy(false);
     }
   }

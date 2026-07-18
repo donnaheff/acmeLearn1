@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 type Course = { id: string; title: string };
 
@@ -29,7 +30,7 @@ export function AdminClient({ courses }: { courses: Course[] }) {
     };
     const { error } = await supabase.functions.invoke('create-zoom-meeting', { body });
     if (error) {
-      toast(error.message);
+      toast(await functionErrorMessage(error));
     } else {
       toast('Zoom lecture created and reminders queued.');
       formRef.current?.reset();
@@ -51,7 +52,7 @@ export function AdminClient({ courses }: { courses: Course[] }) {
       body: { email, course_id, status: 'active' },
     });
     if (error) {
-      toast(error.message);
+      toast(await functionErrorMessage(error));
     } else {
       toast(`${email} is now enrolled.`);
       router.refresh();

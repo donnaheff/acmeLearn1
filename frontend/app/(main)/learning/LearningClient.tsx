@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 const ANSWER_KEY: Record<string, string> = { q1: 'B', q2: 'C', q3: 'A', q4: 'B' };
 
@@ -34,7 +35,7 @@ export function LearningClient({ signedIn, profileId }: { signedIn: boolean; pro
         const { error: recError } = await supabase.functions.invoke('generate-recommendations', { body: {} });
         if (recError) throw recError;
       } catch (err) {
-        toast(err instanceof Error ? err.message : 'Could not save your result');
+        toast(await functionErrorMessage(err));
       }
     }
     setSubmitting(false);

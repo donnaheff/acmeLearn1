@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 export type Lecture = {
   id: string;
@@ -38,7 +39,7 @@ function JoinButton({ lecture, wide }: { lecture: Lecture; wide?: boolean }) {
         throw new Error(data?.message || 'Access unavailable');
       }
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not verify access');
+      toast(await functionErrorMessage(e));
       setBusy(false);
     }
   }

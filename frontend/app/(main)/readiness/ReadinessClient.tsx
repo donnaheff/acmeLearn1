@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 function UnavailableNotice() {
   return (
@@ -44,7 +45,7 @@ export function ReadinessClient({ enabled }: { enabled: boolean }) {
         if (status === 423) {
           toast('Readiness forecasting is not enabled for this pilot.');
         } else {
-          toast(error.message);
+          toast(await functionErrorMessage(error));
         }
         return;
       }

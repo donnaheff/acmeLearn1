@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 type Staff = {
   id: string;
@@ -32,7 +33,7 @@ export function TeamAdminClient({ staff }: { staff: Staff[] }) {
     });
     setInviting(false);
     if (error) {
-      toast('Could not send invite — check the email and try again.');
+      toast(await functionErrorMessage(error));
       return;
     }
     toast(`Invite sent to ${data.email} as ${data.role}.`);

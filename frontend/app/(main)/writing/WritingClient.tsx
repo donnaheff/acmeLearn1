@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
+import { functionErrorMessage } from '@/lib/functionError';
 
 const QUESTION =
   'Some people believe university education should be free for everyone. To what extent do you agree or disagree?';
@@ -99,7 +100,7 @@ export function WritingClient({ profileId }: { profileId: string }) {
     });
     setAnalyzingId(null);
     if (error) {
-      toast('Could not generate feedback — is ANTHROPIC_API_KEY configured?');
+      toast(await functionErrorMessage(error));
       return;
     }
     toast('Instant AI feedback ready below.');
