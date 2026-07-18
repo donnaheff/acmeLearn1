@@ -44,7 +44,7 @@ export function LoginForm() {
   async function handleOAuth(provider: (typeof PROVIDERS)[number][0]) {
     await supabase.auth.signInWithOAuth({
       provider: provider as 'google' | 'apple' | 'azure' | 'facebook',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   }
 

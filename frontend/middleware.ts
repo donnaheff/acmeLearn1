@@ -6,7 +6,7 @@ const PUBLIC_ROUTES = new Set([
   '/', '/login', '/signup', '/reset-password', '/courses', '/practice',
   '/resources', '/marketplace', '/meet-your-tutor', '/pilot', '/compare',
   '/service-standards', '/support', '/research', '/terms', '/privacy',
-  '/billing', '/learning', '/offline',
+  '/billing', '/learning', '/offline', '/auth/callback',
 ]);
 
 // Mirrors each page's original `data-role` attribute.

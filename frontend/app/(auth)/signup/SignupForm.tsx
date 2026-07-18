@@ -29,6 +29,7 @@ export function SignupForm({ whatsappEnabled }: { whatsappEnabled: boolean }) {
       email: String(data.get('email')),
       password: String(data.get('password')),
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           first_name: data.get('firstName'),
           last_name: data.get('lastName'),
@@ -55,7 +56,7 @@ export function SignupForm({ whatsappEnabled }: { whatsappEnabled: boolean }) {
   async function handleOAuth(provider: string) {
     await supabase.auth.signInWithOAuth({
       provider: provider as 'google' | 'apple' | 'azure' | 'facebook',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   }
 
