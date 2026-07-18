@@ -4,10 +4,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 // visible to signed-out visitors. Everything else requires a session.
 const PUBLIC_ROUTES = new Set([
   '/', '/login', '/signup', '/reset-password', '/courses', '/practice',
-  '/resources', '/marketplace', '/meet-your-tutor', '/pilot', '/compare',
+  '/marketplace', '/meet-your-tutor', '/pilot', '/compare',
   '/service-standards', '/support', '/research', '/terms', '/privacy',
   '/billing', '/learning', '/offline', '/auth/callback',
 ]);
+
+// Requires a paid order or active subscription (or staff), checked via the
+// is_paying_client() RPC — resources are a paid-client perk, not a public
+// marketing page.
+const PAID_ROUTES = new Set(['/resources']);
 
 // Mirrors each page's original `data-role` attribute.
 const ROLE_ROUTES: Record<string, string[]> = {
@@ -117,10 +122,26 @@ async function fetchRole(accessToken: string, userId: string): Promise<string | 
   }
 }
 
+async function fetchIsPayingClient(accessToken: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  try {
+    const res = await fetch(`${url}/rest/v1/rpc/is_paying_client`, {
+      method: 'POST',
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    if (!res.ok) return false;
+    return (await res.json()) === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const session = readSession(request);
-  const requiresAuth = !PUBLIC_ROUTES.has(path) && !path.startsWith('/resources/');
+  const requiresAuth = !PUBLIC_ROUTES.has(path);
 
   if (requiresAuth && !session) {
     const url = request.nextUrl.clone();
@@ -137,12 +158,29 @@ export async function middleware(request: NextRequest) {
           .filter((base) => path.startsWith(`${base}/`))
           .sort((a, b) => b.length - a.length)[0];
   const allowedRoles = roleRouteKey ? ROLE_ROUTES[roleRouteKey] : undefined;
+  let role: string | null = null;
   if (allowedRoles && session) {
-    const role = await fetchRole(session.access_token, session.user!.id);
+    role = await fetchRole(session.access_token, session.user!.id);
     if (!role || !allowedRoles.includes(role)) {
       const url = request.nextUrl.clone();
       url.pathname = '/restricted';
       return NextResponse.redirect(url);
+    }
+  }
+
+  const isPaidRoute =
+    PAID_ROUTES.has(path) || Array.from(PAID_ROUTES).some((base) => path.startsWith(`${base}/`));
+  if (isPaidRoute && session) {
+    role = role ?? (await fetchRole(session.access_token, session.user!.id));
+    const isStaff = role === 'admin' || role === 'tutor';
+    if (!isStaff) {
+      const isPaying = await fetchIsPayingClient(session.access_token);
+      if (!isPaying) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/restricted';
+        url.searchParams.set('reason', 'paid');
+        return NextResponse.redirect(url);
+      }
     }
   }
 
