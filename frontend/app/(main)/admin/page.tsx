@@ -2,6 +2,69 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { AdminClient } from './AdminClient';
 
+const ADMIN_TOOLS = [
+  {
+    href: '/content-admin',
+    eyebrow: 'CMS',
+    title: 'Homepage & Resources copy',
+    description: 'Edit hero copy and campaign text without a deploy.',
+  },
+  {
+    href: '/content-admin/articles',
+    eyebrow: 'CMS',
+    title: 'Articles',
+    description: 'Draft, submit and publish guides shown on /resources.',
+  },
+  {
+    href: '/claims-admin',
+    eyebrow: 'Compliance',
+    title: 'Marketing claims',
+    description: 'Track claim wording, evidence and expiry dates.',
+  },
+  {
+    href: '/commerce',
+    eyebrow: 'Billing',
+    title: 'Payments & refunds',
+    description: 'Review orders, discounts and refund requests.',
+  },
+  {
+    href: '/launch-control',
+    eyebrow: 'Release',
+    title: 'Launch control',
+    description: 'Track the checks blocking production launch.',
+  },
+  {
+    href: '/monitoring',
+    eyebrow: 'Ops',
+    title: 'Platform health',
+    description: 'Error rates, incident recovery and system status.',
+  },
+  {
+    href: '/analytics',
+    eyebrow: 'Insights',
+    title: 'Performance analytics',
+    description: 'Funnel, retention and cohort performance.',
+  },
+  {
+    href: '/moderation',
+    eyebrow: 'Quality',
+    title: 'Marking moderation',
+    description: 'Re-mark samples and audit scoring consistency.',
+  },
+  {
+    href: '/question-admin',
+    eyebrow: 'Content',
+    title: 'Question bank',
+    description: 'Manage assessment items and versions.',
+  },
+  {
+    href: '/tutor-operations',
+    eyebrow: 'Staffing',
+    title: 'Tutor operations',
+    description: 'Schedules, workload and capacity across tutors.',
+  },
+];
+
 export default async function AdminPage() {
   const supabase = await createClient();
 
@@ -89,6 +152,20 @@ export default async function AdminPage() {
               <span className="eyebrow">Reminders</span>
               <strong>{reminderPct !== null ? `${reminderPct}%` : '—'}</strong>
               <small>Delivered successfully</small>
+            </div>
+          </div>
+          <div className="panel" style={{ marginBottom: 22 }}>
+            <div className="section-head" style={{ marginBottom: 12 }}>
+              <h3>Administration tools</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+              {ADMIN_TOOLS.map((tool) => (
+                <Link key={tool.href} href={tool.href} className="feature-card" style={{ display: 'block' }}>
+                  <span className="eyebrow">{tool.eyebrow}</span>
+                  <h4 style={{ margin: '8px 0 4px' }}>{tool.title}</h4>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>{tool.description}</p>
+                </Link>
+              ))}
             </div>
           </div>
           <div className="admin-grid">

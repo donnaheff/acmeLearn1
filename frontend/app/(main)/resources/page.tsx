@@ -1,33 +1,70 @@
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { getResourcesContent } from '@/lib/siteContent';
 
-export default function ResourcesPage() {
+type ArticleRow = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  read_minutes: number;
+  featured: boolean;
+  published_at: string | null;
+  created_at: string;
+};
+
+function dateLabel(row: ArticleRow) {
+  return new Date(row.published_at ?? row.created_at).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export default async function ResourcesPage() {
+  const content = await getResourcesContent();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('articles')
+    .select('slug, title, excerpt, category, read_minutes, featured, published_at, created_at')
+    .eq('status', 'published')
+    .order('featured', { ascending: false })
+    .order('published_at', { ascending: false });
+
+  const articles = (data as ArticleRow[] | null) ?? [];
+  const [featured, ...rest] = articles;
+
   return (
     <>
       <header className="page-hero">
         <div className="shell">
           <div className="crumb">Home / Resources</div>
-          <span className="eyebrow">Guides, insights &amp; strategies</span>
-          <h1>Better preparation starts with better advice.</h1>
-          <p>
-            Practical explanations from IELTS teachers, examiners and learners—free to read and
-            made to use.
-          </p>
+          <span className="eyebrow">{content.eyebrow}</span>
+          <h1>{content.heading}</h1>
+          <p>{content.body}</p>
         </div>
       </header>
       <main className="section">
         <div className="shell">
           <div className="promo-grid" style={{ marginBottom: 48 }}>
-            <article className="promo-main" style={{ background: '#102c49' }}>
-              <span className="eyebrow">Featured guide · 8 min read</span>
-              <h2>What Band 7 writing really looks like.</h2>
-              <p>
-                We annotate a real Task 2 response against all four examiner criteria—sentence by
-                sentence.
-              </p>
-              <Link href="/resources/band-7" className="btn btn-coral">
-                Read the guide →
-              </Link>
-            </article>
+            {featured ? (
+              <article className="promo-main" style={{ background: '#102c49' }}>
+                <span className="eyebrow">
+                  Featured guide · {featured.read_minutes} min read
+                </span>
+                <h2>{featured.title}</h2>
+                <p>{featured.excerpt}</p>
+                <Link href={`/resources/${featured.slug}`} className="btn btn-coral">
+                  Read the guide →
+                </Link>
+              </article>
+            ) : (
+              <article className="promo-main" style={{ background: '#102c49' }}>
+                <span className="eyebrow">More guides coming soon</span>
+                <h2>New articles are on the way.</h2>
+                <p>Check back shortly for the next teaching team guide.</p>
+              </article>
+            )}
             <aside className="promo-side" style={{ background: '#dcefeb', color: 'var(--navy)' }}>
               <span className="eyebrow">Free download</span>
               <h2 style={{ fontSize: 32 }}>The 30-day IELTS planner</h2>
@@ -43,50 +80,28 @@ export default function ResourcesPage() {
               <h2>Learn something useful.</h2>
             </div>
           </div>
-          <div className="course-grid">
-            <article className="course">
-              <div className="course-top">
-                <span className="eyebrow">Writing</span>
-                <h3>7 phrases to avoid in Task 2</h3>
-              </div>
-              <div className="course-body">
-                <p>Why memorised language lowers your score—and what to write instead.</p>
-                <div className="meta">
-                  <span>6 min read</span>
-                  <span>12 Jul 2026</span>
-                </div>
-                <a href="#">Read article →</a>
-              </div>
-            </article>
-            <article className="course">
-              <div className="course-top">
-                <span className="eyebrow">Speaking</span>
-                <h3>How to stop giving short answers</h3>
-              </div>
-              <div className="course-body">
-                <p>A simple three-part pattern to develop natural, fluent responses.</p>
-                <div className="meta">
-                  <span>5 min read</span>
-                  <span>08 Jul 2026</span>
-                </div>
-                <a href="#">Read article →</a>
-              </div>
-            </article>
-            <article className="course">
-              <div className="course-top">
-                <span className="eyebrow">Planning</span>
-                <h3>When should you book your exam?</h3>
-              </div>
-              <div className="course-body">
-                <p>Use practice scores—not guesswork—to choose the right test date.</p>
-                <div className="meta">
-                  <span>7 min read</span>
-                  <span>01 Jul 2026</span>
-                </div>
-                <a href="#">Read article →</a>
-              </div>
-            </article>
-          </div>
+          {rest.length > 0 ? (
+            <div className="course-grid">
+              {rest.map((article) => (
+                <article className="course" key={article.slug}>
+                  <div className="course-top">
+                    <span className="eyebrow">{article.category}</span>
+                    <h3>{article.title}</h3>
+                  </div>
+                  <div className="course-body">
+                    <p>{article.excerpt}</p>
+                    <div className="meta">
+                      <span>{article.read_minutes} min read</span>
+                      <span>{dateLabel(article)}</span>
+                    </div>
+                    <Link href={`/resources/${article.slug}`}>Read article →</Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--muted)' }}>More articles are being written—check back soon.</p>
+          )}
         </div>
       </main>
     </>

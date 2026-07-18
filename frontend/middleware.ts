@@ -15,6 +15,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
   '/claims-admin': ['admin'],
   '/commerce': ['admin'],
   '/content-admin': ['admin'],
+  '/content-admin/articles': ['admin', 'tutor'],
   '/launch-control': ['admin'],
   '/monitoring': ['admin'],
   '/analytics': ['admin', 'tutor'],
@@ -129,7 +130,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const allowedRoles = ROLE_ROUTES[path];
+  const roleRouteKey =
+    path in ROLE_ROUTES
+      ? path
+      : Object.keys(ROLE_ROUTES)
+          .filter((base) => path.startsWith(`${base}/`))
+          .sort((a, b) => b.length - a.length)[0];
+  const allowedRoles = roleRouteKey ? ROLE_ROUTES[roleRouteKey] : undefined;
   if (allowedRoles && session) {
     const role = await fetchRole(session.access_token, session.user!.id);
     if (!role || !allowedRoles.includes(role)) {

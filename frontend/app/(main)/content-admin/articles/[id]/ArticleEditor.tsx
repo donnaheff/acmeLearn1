@@ -1,0 +1,216 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSupabase } from '@/lib/supabase/useSupabase';
+import { useToast } from '@/components/ToastProvider';
+import type { Profile } from '@/lib/session';
+
+type Article = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  category: string;
+  read_minutes: number;
+  featured: boolean;
+  status: 'draft' | 'submitted' | 'published';
+};
+
+function slugify(title: string) {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function ArticleEditor({ profile, article }: { profile: Profile; article: Article | null }) {
+  const supabase = useSupabase();
+  const toast = useToast();
+  const router = useRouter();
+  const isAdmin = profile.role === 'admin';
+
+  const [title, setTitle] = useState(article?.title ?? '');
+  const [slug, setSlug] = useState(article?.slug ?? '');
+  const [slugTouched, setSlugTouched] = useState(Boolean(article));
+  const [excerpt, setExcerpt] = useState(article?.excerpt ?? '');
+  const [body, setBody] = useState(article?.body ?? '');
+  const [category, setCategory] = useState(article?.category ?? 'Writing');
+  const [readMinutes, setReadMinutes] = useState(article?.read_minutes ?? 5);
+  const [featured, setFeatured] = useState(article?.featured ?? false);
+  const [submitting, setSubmitting] = useState(false);
+  const [aiTopic, setAiTopic] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+
+  function handleTitleChange(value: string) {
+    setTitle(value);
+    if (!slugTouched) setSlug(slugify(value));
+  }
+
+  async function save(status: 'draft' | 'submitted' | 'published') {
+    if (!title.trim() || !slug.trim()) {
+      toast('Title and slug are required.');
+      return;
+    }
+    setSubmitting(true);
+    const payload = {
+      title,
+      slug,
+      excerpt,
+      body,
+      category,
+      read_minutes: readMinutes,
+      featured: isAdmin ? featured : false,
+      status,
+      published_at: status === 'published' ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = article
+      ? await supabase.from('articles').update(payload).eq('id', article.id)
+      : await supabase.from('articles').insert({ ...payload, author_id: profile.id });
+
+    setSubmitting(false);
+    if (error) {
+      toast(error.message);
+      return;
+    }
+    toast(
+      status === 'published' ? 'Published to Resources.' : status === 'submitted' ? 'Submitted for review.' : 'Draft saved.',
+    );
+    router.push('/content-admin/articles');
+    router.refresh();
+  }
+
+  async function generateWithAI() {
+    if (!aiTopic.trim()) {
+      toast('Describe what the article should cover first.');
+      return;
+    }
+    setAiBusy(true);
+    const { data, error } = await supabase.functions.invoke('generate-article-draft', {
+      body: { topic: aiTopic },
+    });
+    setAiBusy(false);
+    if (error) {
+      toast('AI drafting failed — is ANTHROPIC_API_KEY configured?');
+      return;
+    }
+    if (data?.title) handleTitleChange(data.title);
+    if (data?.excerpt) setExcerpt(data.excerpt);
+    if (data?.body) setBody(data.body);
+    if (data?.category) setCategory(data.category);
+    if (data?.read_minutes) setReadMinutes(data.read_minutes);
+    toast('AI draft inserted below — review before publishing.');
+  }
+
+  return (
+    <>
+      <section className="panel staff-form">
+        <div>
+          <label>TITLE</label>
+          <input value={title} onChange={(e) => handleTitleChange(e.target.value)} placeholder="e.g. Understanding IELTS Band 7" />
+        </div>
+        <div>
+          <label>SLUG (URL: /resources/…)</label>
+          <input
+            value={slug}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setSlug(slugify(e.target.value));
+            }}
+          />
+        </div>
+        <div>
+          <label>EXCERPT</label>
+          <textarea rows={2} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+        </div>
+        <div className="form-grid">
+          <div className="field">
+            <label>CATEGORY</label>
+            <input value={category} onChange={(e) => setCategory(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>READ MINUTES</label>
+            <input
+              type="number"
+              min={1}
+              value={readMinutes}
+              onChange={(e) => setReadMinutes(Number(e.target.value) || 1)}
+            />
+          </div>
+        </div>
+        {isAdmin && (
+          <label className="check">
+            <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />{' '}
+            <span>Feature this article at the top of Resources</span>
+          </label>
+        )}
+        <div>
+          <label>BODY (blank line between paragraphs, start a line with &quot;## &quot; for a heading)</label>
+          <textarea
+            className="editor"
+            style={{ minHeight: 320, font: '15px/1.7 inherit' }}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-outline" disabled={submitting} onClick={() => save('draft')}>
+            Save draft
+          </button>
+          <button type="button" className="btn btn-dark" disabled={submitting} onClick={() => save('submitted')}>
+            Submit for review
+          </button>
+          {isAdmin && (
+            <button type="button" className="btn btn-coral" disabled={submitting} onClick={() => save('published')}>
+              Publish
+            </button>
+          )}
+        </div>
+      </section>
+      <aside>
+        <div className="panel">
+          <span className="eyebrow">AI draft assist</span>
+          <h3 style={{ margin: '10px 0' }}>Start from a topic</h3>
+          <p style={{ color: 'var(--muted)', fontSize: 13 }}>
+            Describe what the guide should cover — AI fills in a first draft below for you to fact-check
+            and edit before submitting.
+          </p>
+          <textarea
+            rows={3}
+            placeholder="e.g. Common mistakes in IELTS Speaking Part 2"
+            value={aiTopic}
+            onChange={(e) => setAiTopic(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn btn-dark"
+            style={{ width: '100%', marginTop: 10 }}
+            disabled={aiBusy}
+            onClick={generateWithAI}
+          >
+            {aiBusy ? 'Drafting…' : 'Generate draft with AI'}
+          </button>
+        </div>
+        <div className="panel" style={{ marginTop: 20 }}>
+          <span className="eyebrow">Workflow</span>
+          <div className="phase-step">
+            <b>1</b>
+            <span>Save a draft, come back anytime</span>
+          </div>
+          <div className="phase-step">
+            <b>2</b>
+            <span>Submit for review once ready</span>
+          </div>
+          <div className="phase-step">
+            <b>3</b>
+            <span>{isAdmin ? 'Publish it yourself' : 'An admin reviews and publishes it'}</span>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
