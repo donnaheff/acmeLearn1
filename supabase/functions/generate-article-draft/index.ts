@@ -1,4 +1,4 @@
-import { cors, json, authUser, profile } from '../_shared/utils.ts';
+import { cors, json, authUser, profile, rateLimit } from '../_shared/utils.ts';
 
 const SYSTEM_PROMPT = `You write short IELTS-preparation guides for AcmeLearn, an IELTS coaching platform.
 Reply with ONLY a JSON object (no markdown fences, no commentary) with exactly these keys:
@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
     if (!['admin', 'tutor'].includes(callerProfile.role)) {
       return json({ error: 'Only staff can generate article drafts' }, 403);
     }
+    await rateLimit(`ai-draft:${user.id}`, 10, 3600); // 10 drafts/hour/user — this calls a paid API per request
 
     const { topic } = await req.json();
     if (!topic || typeof topic !== 'string') {

@@ -1,8 +1,9 @@
-import {json,admin,zoomToken} from '../_shared/utils.ts';
+import {json,admin,zoomToken,rateLimit,clientIp} from '../_shared/utils.ts';
 const secret=Deno.env.get('ZOOM_WEBHOOK_SECRET_TOKEN')!;
 async function hmac(value:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(value));return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 Deno.serve(async(req)=>{try{const raw=await req.text(),body=JSON.parse(raw);
  if(body.event==='endpoint.url_validation')return json({plainToken:body.payload.plainToken,encryptedToken:await hmac(body.payload.plainToken)});
+ await rateLimit(`webhook:zoom:${clientIp(req)}`,120,60); // 120 req/min per source IP
  const ts=req.headers.get('x-zm-request-timestamp')||'',provided=req.headers.get('x-zm-signature')||'',expected=`v0=${await hmac(`v0:${ts}:${raw}`)}`;
  if(Math.abs(Date.now()/1000-Number(ts))>300||provided!==expected)return json({error:'Invalid Zoom signature'},401);
  const allowed=['meeting.participant_joined','meeting.participant_left','meeting.ended','recording.completed'];if(!allowed.includes(body.event))return json({received:true});
