@@ -28,15 +28,24 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [prepSeconds, setPrepSeconds] = useState(60);
+  const [recordSeconds, setRecordSeconds] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [transcriptDrafts, setTranscriptDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (recording) return;
     const id = setInterval(() => setPrepSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [recording]);
+
+  useEffect(() => {
+    if (!recording) return;
+    setRecordSeconds(0);
+    const id = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [recording]);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -82,8 +91,11 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
   }
 
   function stopRecording() {
-    recorderRef.current?.stop();
-    setRecording(false);
+    try {
+      recorderRef.current?.stop();
+    } finally {
+      setRecording(false);
+    }
   }
 
   async function submitSpeech() {
@@ -195,9 +207,11 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
               <li>and explain how it would help you</li>
             </ul>
             <div style={{ background: 'var(--paper)', padding: 22, margin: '25px 0' }}>
-              <small>PREPARATION TIME</small>
+              <small>{recording ? 'RECORDING TIME' : 'PREPARATION TIME'}</small>
               <div className="timer">
-                {String(Math.floor(prepSeconds / 60)).padStart(2, '0')}:{String(prepSeconds % 60).padStart(2, '0')}
+                {recording
+                  ? `${String(Math.floor(recordSeconds / 60)).padStart(2, '0')}:${String(recordSeconds % 60).padStart(2, '0')}`
+                  : `${String(Math.floor(prepSeconds / 60)).padStart(2, '0')}:${String(prepSeconds % 60).padStart(2, '0')}`}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -221,7 +235,8 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
                   submission)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={8}
+                  style={{ width: '100%', resize: 'vertical' }}
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
                   placeholder="Type roughly what you said, or leave blank for automatic transcription…"
@@ -310,7 +325,8 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
                       </button>
                       <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 8px' }}>Or type it yourself:</p>
                       <textarea
-                        rows={2}
+                        rows={6}
+                        style={{ width: '100%', resize: 'vertical' }}
                         value={transcriptDrafts[a.id] ?? ''}
                         onChange={(e) => setTranscriptDrafts((d) => ({ ...d, [a.id]: e.target.value }))}
                         placeholder="Type roughly what you said…"
