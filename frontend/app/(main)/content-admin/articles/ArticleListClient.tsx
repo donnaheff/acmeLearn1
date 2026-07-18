@@ -12,10 +12,11 @@ type ArticleRow = {
   slug: string;
   title: string;
   category: string;
-  status: 'draft' | 'submitted' | 'published';
+  status: 'draft' | 'submitted' | 'scheduled' | 'published';
   featured: boolean;
   author_id: string | null;
   updated_at: string;
+  scheduled_publish_at: string | null;
 };
 
 export function ArticleListClient({
@@ -90,6 +91,16 @@ export function ArticleListClient({
                 <td>{a.category}</td>
                 <td>
                   <span className={`status${a.status !== 'published' ? ' warn' : ''}`}>{a.status}</span>
+                  {a.status === 'scheduled' && a.scheduled_publish_at && (
+                    <small style={{ display: 'block', color: 'var(--muted)' }}>
+                      {new Date(a.scheduled_publish_at).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </small>
+                  )}
                 </td>
                 <td>{a.featured ? 'Yes' : '—'}</td>
                 <td>

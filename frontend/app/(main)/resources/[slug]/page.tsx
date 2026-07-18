@@ -1,17 +1,37 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { renderArticleBody } from '@/lib/renderArticleBody';
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
+async function getArticle(slug: string) {
   const supabase = await createClient();
-  const { data: article } = await supabase
+  const { data } = await supabase
     .from('articles')
-    .select('title, excerpt, body, category, read_minutes, published_at, created_at')
-    .eq('slug', params.slug)
+    .select('title, excerpt, body, category, read_minutes, published_at, created_at, cover_image_url, meta_description')
+    .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
+  return data;
+}
 
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const article = await getArticle(params.slug);
+  if (!article) return { title: 'Article not found — AcmeLearn' };
+  const description = article.meta_description || article.excerpt;
+  return {
+    title: `${article.title} — AcmeLearn`,
+    description,
+    openGraph: {
+      title: article.title,
+      description,
+      images: article.cover_image_url ? [article.cover_image_url] : undefined,
+    },
+  };
+}
+
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await getArticle(params.slug);
   if (!article) notFound();
 
   const dateLabel = new Date(article.published_at ?? article.created_at).toLocaleDateString('en-GB', {
@@ -36,6 +56,14 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       </header>
       <main className="section">
         <div className="shell legal">
+          {article.cover_image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={article.cover_image_url}
+              alt=""
+              style={{ width: '100%', maxHeight: 420, objectFit: 'cover', marginBottom: 30 }}
+            />
+          )}
           {renderArticleBody(article.body)}
           <div className="auth-alert" style={{ marginTop: 40 }}>
             <strong>Want a plan built around this?</strong> A tutor can turn this guide into a

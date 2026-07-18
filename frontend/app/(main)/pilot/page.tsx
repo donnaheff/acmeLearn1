@@ -1,16 +1,15 @@
 import { PilotForm } from './PilotForm';
+import { getPilotContent } from '@/lib/siteContent';
 
-export default function PilotPage() {
+export default async function PilotPage() {
+  const content = await getPilotContent();
   return (
     <>
       <header className="page-hero">
         <div className="shell">
-          <span className="eyebrow">Controlled launch · 20 learners</span>
-          <h1 style={{ fontSize: 54 }}>Help shape AcmeLearn’s first cohort.</h1>
-          <p>
-            The pilot validates learning quality, accessibility and tutor capacity before broader
-            sales open. Participation does not guarantee a particular IELTS result.
-          </p>
+          <span className="eyebrow">{content.eyebrow}</span>
+          <h1 style={{ fontSize: 54 }}>{content.heading}</h1>
+          <p>{content.body}</p>
         </div>
       </header>
       <main className="section section-soft">

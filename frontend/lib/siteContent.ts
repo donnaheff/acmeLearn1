@@ -1,27 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
 import defaults from '@/lib/site-content.default.json';
 
-type HomeContent = typeof defaults.home;
-type ResourcesContent = typeof defaults.resources;
+type ContentKey = keyof typeof defaults;
 
-export async function getHomeContent(): Promise<HomeContent> {
+async function getSection<K extends ContentKey>(key: K): Promise<(typeof defaults)[K]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('site_content')
     .select('value')
-    .eq('content_key', 'home')
+    .eq('content_key', key)
     .eq('published', true)
     .maybeSingle();
-  return { ...defaults.home, ...(data?.value as Partial<HomeContent> | undefined) };
+  return { ...defaults[key], ...(data?.value as Partial<(typeof defaults)[K]> | undefined) };
 }
 
-export async function getResourcesContent(): Promise<ResourcesContent> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('site_content')
-    .select('value')
-    .eq('content_key', 'resources')
-    .eq('published', true)
-    .maybeSingle();
-  return { ...defaults.resources, ...(data?.value as Partial<ResourcesContent> | undefined) };
-}
+export const getHomeContent = () => getSection('home');
+export const getResourcesContent = () => getSection('resources');
+export const getCompareContent = () => getSection('compare');
+export const getPilotContent = () => getSection('pilot');
+export const getMeetYourTutorContent = () => getSection('meet_your_tutor');

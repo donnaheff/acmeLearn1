@@ -11,6 +11,7 @@ type ArticleRow = {
   featured: boolean;
   published_at: string | null;
   created_at: string;
+  cover_image_url: string | null;
 };
 
 function dateLabel(row: ArticleRow) {
@@ -26,7 +27,7 @@ export default async function ResourcesPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from('articles')
-    .select('slug, title, excerpt, category, read_minutes, featured, published_at, created_at')
+    .select('slug, title, excerpt, category, read_minutes, featured, published_at, created_at, cover_image_url')
     .eq('status', 'published')
     .order('featured', { ascending: false })
     .order('published_at', { ascending: false });
@@ -84,6 +85,14 @@ export default async function ResourcesPage() {
             <div className="course-grid">
               {rest.map((article) => (
                 <article className="course" key={article.slug}>
+                  {article.cover_image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={article.cover_image_url}
+                      alt=""
+                      style={{ width: '100%', height: 160, objectFit: 'cover' }}
+                    />
+                  )}
                   <div className="course-top">
                     <span className="eyebrow">{article.category}</span>
                     <h3>{article.title}</h3>

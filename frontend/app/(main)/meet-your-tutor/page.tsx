@@ -1,4 +1,7 @@
-export default function MeetYourTutorPage() {
+import { getMeetYourTutorContent } from '@/lib/siteContent';
+
+export default async function MeetYourTutorPage() {
+  const content = await getMeetYourTutorContent();
   return (
     <>
       <header className="page-hero">
@@ -17,10 +20,10 @@ export default function MeetYourTutorPage() {
               />
             </picture>
             <div className="single-tutor-copy">
-              <span className="verified">Founding tutor profile</span>
-              <h1 style={{ fontSize: 52, margin: '15px 0' }}>Paulyn Moneke</h1>
-              <p>AcmeLearn’s founding IELTS tutor and academic-English specialist.</p>
-              <p>Launch profile · learner reviews begin after the pilot</p>
+              <span className="verified">{content.badge}</span>
+              <h1 style={{ fontSize: 52, margin: '15px 0' }}>{content.name}</h1>
+              <p>{content.tagline}</p>
+              <p>{content.note}</p>
               <a className="btn btn-coral" href="#availability">
                 View availability →
               </a>

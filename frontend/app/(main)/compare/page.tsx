@@ -1,14 +1,16 @@
 import Link from 'next/link';
 import { CompareForm } from './CompareForm';
+import { getCompareContent } from '@/lib/siteContent';
 
-export default function ComparePage() {
+export default async function ComparePage() {
+  const content = await getCompareContent();
   return (
     <>
       <header className="page-hero">
         <div className="shell">
-          <span className="eyebrow">Plan comparison</span>
-          <h1 style={{ fontSize: 52 }}>Find the right preparation route.</h1>
-          <p>Answer three questions for a recommendation, then compare every feature side by side.</p>
+          <span className="eyebrow">{content.eyebrow}</span>
+          <h1 style={{ fontSize: 52 }}>{content.heading}</h1>
+          <p>{content.body}</p>
         </div>
       </header>
       <main className="section section-soft">

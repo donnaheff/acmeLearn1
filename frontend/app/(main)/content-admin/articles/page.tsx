@@ -8,7 +8,7 @@ export default async function ArticlesAdminPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from('articles')
-    .select('id, slug, title, category, status, featured, author_id, updated_at')
+    .select('id, slug, title, category, status, featured, author_id, updated_at, scheduled_publish_at')
     .order('updated_at', { ascending: false });
 
   return (

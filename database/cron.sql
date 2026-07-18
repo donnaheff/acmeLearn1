@@ -11,3 +11,10 @@ select cron.schedule('acmelearn-reminders','*/5 * * * *',$$
   body := '{}'::jsonb
  )
 $$);
+select cron.schedule('acmelearn-scheduled-articles','*/5 * * * *',$$
+ select net.http_post(
+  url := (select decrypted_secret from vault.decrypted_secrets where name='acme_site_url') || '/functions/v1/publish-scheduled-articles',
+  headers := jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name='acme_cron_secret')),
+  body := '{}'::jsonb
+ )
+$$);
