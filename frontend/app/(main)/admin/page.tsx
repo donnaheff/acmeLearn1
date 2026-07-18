@@ -69,6 +69,12 @@ const ADMIN_TOOLS = [
     title: 'Support tickets',
     description: 'Draft AI-suggested replies and track resolution.',
   },
+  {
+    href: '/team-admin',
+    eyebrow: 'Access',
+    title: 'Team & privileges',
+    description: 'Invite new staff by email and manage admin/tutor roles.',
+  },
 ];
 
 export default async function AdminPage() {

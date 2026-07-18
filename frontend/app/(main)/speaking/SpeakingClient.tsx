@@ -102,20 +102,27 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
         .upload(path, blobRef.current, { contentType: 'audio/webm' });
       if (uploadError) throw uploadError;
 
-      const { error: insertError } = await supabase.from('speaking_attempts').insert({
-        user_id: profileId,
-        part: 2,
-        question: QUESTION,
-        audio_path: path,
-        transcript: transcript.trim() || null,
-        status: 'submitted',
-      });
+      const { data: inserted, error: insertError } = await supabase
+        .from('speaking_attempts')
+        .insert({
+          user_id: profileId,
+          part: 2,
+          question: QUESTION,
+          audio_path: path,
+          transcript: transcript.trim() || null,
+          status: 'submitted',
+        })
+        .select('id')
+        .single();
       if (insertError) throw insertError;
       toast('Speaking response submitted privately to your tutor.');
       setTranscript('');
       setAudioUrl(null);
       blobRef.current = null;
       loadAttempts();
+      if (!transcript.trim() && inserted) {
+        transcribeAutomatically(inserted.id, true);
+      }
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Upload failed');
     } finally {
@@ -135,6 +142,18 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
       return;
     }
     toast('Transcript saved.');
+    loadAttempts();
+  }
+
+  async function transcribeAutomatically(id: string, silent = false) {
+    if (!silent) setAnalyzingId(id);
+    const { error } = await supabase.functions.invoke('transcribe-speaking-attempt', { body: { attempt_id: id } });
+    if (!silent) setAnalyzingId(null);
+    if (error) {
+      if (!silent) toast('Automatic transcription unavailable — type a transcript instead, or check OPENAI_API_KEY is configured.');
+      return;
+    }
+    if (!silent) toast('Transcribed — ready for instant AI feedback.');
     loadAttempts();
   }
 
@@ -197,14 +216,14 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
             {audioUrl && (
               <div style={{ marginTop: 16 }}>
                 <label style={{ fontSize: 12, fontWeight: 700 }}>
-                  TYPE A TRANSCRIPT (optional — enables instant AI feedback; automatic speech-to-text isn&apos;t
-                  wired up yet)
+                  TYPE A TRANSCRIPT (optional — leave blank and we&apos;ll transcribe it automatically after
+                  submission)
                 </label>
                 <textarea
                   rows={3}
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
-                  placeholder="Type roughly what you said…"
+                  placeholder="Type roughly what you said, or leave blank for automatic transcription…"
                 />
               </div>
             )}
@@ -277,8 +296,18 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
                   {!a.transcript && a.ai_overall_band == null && (
                     <div style={{ marginTop: 12, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
                       <label style={{ fontSize: 12, fontWeight: 700 }}>
-                        ADD A TRANSCRIPT TO UNLOCK INSTANT AI FEEDBACK
+                        TRANSCRIBE TO UNLOCK INSTANT AI FEEDBACK
                       </label>
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ marginBottom: 10 }}
+                        disabled={analyzingId === a.id}
+                        onClick={() => transcribeAutomatically(a.id)}
+                      >
+                        {analyzingId === a.id ? 'Transcribing…' : 'Transcribe automatically'}
+                      </button>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 8px' }}>Or type it yourself:</p>
                       <textarea
                         rows={2}
                         value={transcriptDrafts[a.id] ?? ''}

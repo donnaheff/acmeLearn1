@@ -42,3 +42,7 @@ verify_jwt = true
 verify_jwt = true
 [functions.study-assistant-chat]
 verify_jwt = true
+[functions.invite-staff-member]
+verify_jwt = true
+[functions.transcribe-speaking-attempt]
+verify_jwt = true

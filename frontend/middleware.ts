@@ -28,6 +28,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
   '/question-admin': ['admin', 'tutor'],
   '/tutor-operations': ['admin', 'tutor'],
   '/support-admin': ['admin', 'tutor'],
+  '/team-admin': ['admin'],
   '/tutor': ['admin', 'tutor'],
 };
 

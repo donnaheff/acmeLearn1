@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { CouponForm } from './CouponForm';
+import { PricingForm } from './PricingForm';
 
 function money(amountMinor: number, currency = 'NGN') {
   return `${currency} ${(amountMinor / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -40,6 +41,11 @@ export default async function CommercePage() {
       .order('created_at', { ascending: false })
       .limit(5),
   ]);
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('id,name,amount_minor,currency,billing_type,active')
+    .order('amount_minor', { ascending: true });
 
   const paidTotal = paidOrdersThisMonth?.reduce((sum, o) => sum + (o.amount_minor || 0), 0) ?? 0;
   const paidCurrency = paidOrdersThisMonth?.[0]?.currency ?? 'NGN';
@@ -151,7 +157,10 @@ export default async function CommercePage() {
               </div>
             </section>
             <aside>
-              <CouponForm />
+              <PricingForm products={products ?? []} />
+              <div style={{ marginTop: 20 }}>
+                <CouponForm />
+              </div>
               <div className="panel" style={{ marginTop: 20 }}>
                 <span className="eyebrow">Receipts</span>
                 <p style={{ fontSize: 13, color: 'var(--muted)' }}>
