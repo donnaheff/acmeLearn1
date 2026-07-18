@@ -7,6 +7,16 @@ import { useToast } from '@/components/ToastProvider';
 
 const QUESTION = 'Describe a skill you would like to learn.';
 
+type Attempt = {
+  id: string;
+  question: string;
+  status: string;
+  transcript: string | null;
+  ai_overall_band: number | null;
+  ai_criterion_scores: Record<string, number> | null;
+  ai_feedback: string | null;
+};
+
 export function SpeakingClient({ profileId }: { profileId: string }) {
   const supabase = useSupabase();
   const toast = useToast();
@@ -17,6 +27,10 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [prepSeconds, setPrepSeconds] = useState(60);
+  const [transcript, setTranscript] = useState('');
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [transcriptDrafts, setTranscriptDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const id = setInterval(() => setPrepSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
@@ -27,6 +41,21 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const blobRef = useRef<Blob | null>(null);
+
+  async function loadAttempts() {
+    const { data } = await supabase
+      .from('speaking_attempts')
+      .select('id, question, status, transcript, ai_overall_band, ai_criterion_scores, ai_feedback')
+      .eq('user_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setAttempts((data as Attempt[]) ?? []);
+  }
+
+  useEffect(() => {
+    loadAttempts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function startRecording() {
     try {
@@ -78,15 +107,49 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
         part: 2,
         question: QUESTION,
         audio_path: path,
+        transcript: transcript.trim() || null,
         status: 'submitted',
       });
       if (insertError) throw insertError;
       toast('Speaking response submitted privately to your tutor.');
+      setTranscript('');
+      setAudioUrl(null);
+      blobRef.current = null;
+      loadAttempts();
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Upload failed');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function saveTranscript(id: string) {
+    const value = transcriptDrafts[id];
+    if (!value?.trim()) {
+      toast('Type what was said first.');
+      return;
+    }
+    const { error } = await supabase.from('speaking_attempts').update({ transcript: value.trim() }).eq('id', id);
+    if (error) {
+      toast(error.message);
+      return;
+    }
+    toast('Transcript saved.');
+    loadAttempts();
+  }
+
+  async function getAiFeedback(id: string) {
+    setAnalyzingId(id);
+    const { error } = await supabase.functions.invoke('analyze-speaking-attempt', {
+      body: { attempt_id: id },
+    });
+    setAnalyzingId(null);
+    if (error) {
+      toast('Could not generate feedback — add a transcript, or check ANTHROPIC_API_KEY is configured.');
+      return;
+    }
+    toast('Instant AI feedback ready below.');
+    loadAttempts();
   }
 
   return (
@@ -131,6 +194,20 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
             {audioUrl && (
               <audio id="speechPlayback" controls style={{ width: '100%' }} src={audioUrl} />
             )}
+            {audioUrl && (
+              <div style={{ marginTop: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 700 }}>
+                  TYPE A TRANSCRIPT (optional — enables instant AI feedback; automatic speech-to-text isn&apos;t
+                  wired up yet)
+                </label>
+                <textarea
+                  rows={3}
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  placeholder="Type roughly what you said…"
+                />
+              </div>
+            )}
           </section>
           <aside>
             <div className="panel">
@@ -171,6 +248,69 @@ export function SpeakingClient({ profileId }: { profileId: string }) {
             </div>
           </aside>
         </div>
+        {attempts.length > 0 && (
+          <div className="shell" style={{ marginTop: 30 }}>
+            <div className="panel">
+              <div className="section-head" style={{ marginBottom: 12 }}>
+                <h3>Your attempts</h3>
+              </div>
+              {attempts.map((a) => (
+                <div key={a.id} className="panel" style={{ marginBottom: 14, background: 'var(--paper)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div>
+                      <strong>{a.question}</strong>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                        <span className={`status${a.status !== 'marked' ? ' warn' : ''}`}>{a.status}</span>
+                      </div>
+                    </div>
+                    {a.ai_overall_band == null && a.transcript && (
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        disabled={analyzingId === a.id}
+                        onClick={() => getAiFeedback(a.id)}
+                      >
+                        {analyzingId === a.id ? 'Analysing…' : 'Get instant AI feedback'}
+                      </button>
+                    )}
+                  </div>
+                  {!a.transcript && a.ai_overall_band == null && (
+                    <div style={{ marginTop: 12, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700 }}>
+                        ADD A TRANSCRIPT TO UNLOCK INSTANT AI FEEDBACK
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={transcriptDrafts[a.id] ?? ''}
+                        onChange={(e) => setTranscriptDrafts((d) => ({ ...d, [a.id]: e.target.value }))}
+                        placeholder="Type roughly what you said…"
+                      />
+                      <button type="button" className="btn btn-outline" style={{ marginTop: 8 }} onClick={() => saveTranscript(a.id)}>
+                        Save transcript
+                      </button>
+                    </div>
+                  )}
+                  {a.ai_overall_band != null && (
+                    <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+                      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
+                        <span>
+                          <b>AI estimated band: {a.ai_overall_band}</b>
+                        </span>
+                        {a.ai_criterion_scores &&
+                          Object.entries(a.ai_criterion_scores).map(([k, v]) => (
+                            <span key={k} style={{ fontSize: 12, color: 'var(--muted)' }}>
+                              {k.replace(/_/g, ' ')}: {v}
+                            </span>
+                          ))}
+                      </div>
+                      <p style={{ whiteSpace: 'pre-line', fontSize: 14 }}>{a.ai_feedback}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

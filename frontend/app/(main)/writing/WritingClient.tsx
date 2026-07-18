@@ -9,6 +9,17 @@ const QUESTION =
   'Some people believe university education should be free for everyone. To what extent do you agree or disagree?';
 const DRAFT_KEY = 'acmeWritingDraft';
 
+type Submission = {
+  id: string;
+  question: string;
+  status: string;
+  overall_band: number | null;
+  ai_overall_band: number | null;
+  ai_criterion_scores: Record<string, number> | null;
+  ai_feedback: string | null;
+  submitted_at: string | null;
+};
+
 function wordCount(text: string) {
   return (text.trim().match(/\S+/g) || []).length;
 }
@@ -21,6 +32,8 @@ export function WritingClient({ profileId }: { profileId: string }) {
   const [saveState, setSaveState] = useState('Saved locally');
   const [submitting, setSubmitting] = useState(false);
   const [seconds, setSeconds] = useState(2400);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
   useEffect(() => {
     setDraft(localStorage.getItem(DRAFT_KEY) || '');
@@ -29,6 +42,21 @@ export function WritingClient({ profileId }: { profileId: string }) {
   useEffect(() => {
     const id = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  async function loadSubmissions() {
+    const { data } = await supabase
+      .from('writing_submissions')
+      .select('id, question, status, overall_band, ai_overall_band, ai_criterion_scores, ai_feedback, submitted_at')
+      .eq('user_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setSubmissions((data as Submission[]) ?? []);
+  }
+
+  useEffect(() => {
+    loadSubmissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleChange(value: string) {
@@ -59,6 +87,24 @@ export function WritingClient({ profileId }: { profileId: string }) {
       return;
     }
     toast('Submitted to your tutor for rubric feedback.');
+    localStorage.removeItem(DRAFT_KEY);
+    setDraft('');
+    loadSubmissions();
+  }
+
+  async function getAiFeedback(id: string) {
+    setAnalyzingId(id);
+    const { data, error } = await supabase.functions.invoke('analyze-writing-submission', {
+      body: { submission_id: id },
+    });
+    setAnalyzingId(null);
+    if (error) {
+      toast('Could not generate feedback — is ANTHROPIC_API_KEY configured?');
+      return;
+    }
+    toast('Instant AI feedback ready below.');
+    loadSubmissions();
+    return data;
   }
 
   return (
@@ -141,6 +187,54 @@ export function WritingClient({ profileId }: { profileId: string }) {
             </div>
           </aside>
         </div>
+        {submissions.length > 0 && (
+          <div className="shell" style={{ marginTop: 30 }}>
+            <div className="panel">
+              <div className="section-head" style={{ marginBottom: 12 }}>
+                <h3>Your submissions</h3>
+              </div>
+              {submissions.map((s) => (
+                <div key={s.id} className="panel" style={{ marginBottom: 14, background: 'var(--paper)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div>
+                      <strong>{s.question.slice(0, 70)}</strong>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                        <span className={`status${s.status !== 'marked' ? ' warn' : ''}`}>{s.status}</span>
+                        {s.overall_band != null && <span> · Tutor band: {s.overall_band}</span>}
+                      </div>
+                    </div>
+                    {s.ai_overall_band == null && (
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        disabled={analyzingId === s.id}
+                        onClick={() => getAiFeedback(s.id)}
+                      >
+                        {analyzingId === s.id ? 'Analysing…' : 'Get instant AI feedback'}
+                      </button>
+                    )}
+                  </div>
+                  {s.ai_overall_band != null && (
+                    <div style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+                      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
+                        <span>
+                          <b>AI estimated band: {s.ai_overall_band}</b>
+                        </span>
+                        {s.ai_criterion_scores &&
+                          Object.entries(s.ai_criterion_scores).map(([k, v]) => (
+                            <span key={k} style={{ fontSize: 12, color: 'var(--muted)' }}>
+                              {k.replace(/_/g, ' ')}: {v}
+                            </span>
+                          ))}
+                      </div>
+                      <p style={{ whiteSpace: 'pre-line', fontSize: 14 }}>{s.ai_feedback}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

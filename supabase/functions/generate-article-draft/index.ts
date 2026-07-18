@@ -1,4 +1,4 @@
-import { cors, json, authUser, profile, rateLimit } from '../_shared/utils.ts';
+import { cors, json, authUser, profile, rateLimit, callClaude, parseJsonLoose } from '../_shared/utils.ts';
 
 const SYSTEM_PROMPT = `You write short IELTS-preparation guides for AcmeLearn, an IELTS coaching platform.
 Reply with ONLY a JSON object (no markdown fences, no commentary) with exactly these keys:
@@ -20,36 +20,8 @@ Deno.serve(async (req) => {
       return json({ error: 'topic is required' }, 400);
     }
 
-    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!apiKey) {
-      return json({ error: 'AI drafting is not configured yet. Set ANTHROPIC_API_KEY as a Supabase secret.' }, 501);
-    }
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 1800,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: `Write a guide about: ${topic}` }],
-      }),
-    });
-
-    const completion = await res.json();
-    if (!res.ok) {
-      return json({ error: completion.error?.message || 'AI request failed' }, 502);
-    }
-
-    const raw = completion.content?.[0]?.text ?? '{}';
-    const cleaned = raw.trim().replace(/^```(?:json)?/, '').replace(/```$/, '').trim();
-    const draft = JSON.parse(cleaned);
-
-    return json(draft);
+    const raw = await callClaude(SYSTEM_PROMPT, `Write a guide about: ${topic}`, 1800);
+    return json(parseJsonLoose(raw));
   } catch (e) {
     return json({ error: e.message }, 400);
   }

@@ -12,7 +12,7 @@ const PUBLIC_ROUTES = new Set([
 // Requires a paid order or active subscription (or staff), checked via the
 // is_paying_client() RPC — resources are a paid-client perk, not a public
 // marketing page.
-const PAID_ROUTES = new Set(['/resources']);
+const PAID_ROUTES = new Set(['/resources', '/assistant']);
 
 // Mirrors each page's original `data-role` attribute.
 const ROLE_ROUTES: Record<string, string[]> = {
@@ -27,6 +27,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
   '/moderation': ['admin', 'tutor'],
   '/question-admin': ['admin', 'tutor'],
   '/tutor-operations': ['admin', 'tutor'],
+  '/support-admin': ['admin', 'tutor'],
   '/tutor': ['admin', 'tutor'],
 };
 

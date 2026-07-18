@@ -1,9 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 
+const AI_REVIEW_THRESHOLD = 0.5;
+
 export default async function ModerationPage() {
   const supabase = await createClient();
 
-  const [{ data: moderations }, { data: reviewRequests }] = await Promise.all([
+  const [{ data: moderations }, { data: reviewRequests }, { data: aiComparisons }] = await Promise.all([
     supabase
       .from('marking_moderations')
       .select('*, writing_submissions(question)')
@@ -13,12 +15,25 @@ export default async function ModerationPage() {
       .from('score_review_requests')
       .select('*, writing_submissions(question)')
       .eq('status', 'requested'),
+    supabase
+      .from('writing_submissions')
+      .select('id, question, overall_band, ai_overall_band, marked_by')
+      .eq('status', 'marked')
+      .not('overall_band', 'is', null)
+      .not('ai_overall_band', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(30),
   ]);
 
   const diffs = (moderations ?? [])
     .map((m) => (m.original_score != null && m.moderated_score != null ? Math.abs(m.original_score - m.moderated_score) : null))
     .filter((d): d is number => d !== null);
   const meanDiff = diffs.length ? diffs.reduce((a, b) => a + b, 0) / diffs.length : null;
+
+  const flagged = (aiComparisons ?? [])
+    .map((s) => ({ ...s, diff: Math.abs((s.overall_band ?? 0) - (s.ai_overall_band ?? 0)) }))
+    .filter((s) => s.diff >= AI_REVIEW_THRESHOLD)
+    .sort((a, b) => b.diff - a.diff);
 
   return (
     <>
@@ -93,6 +108,46 @@ export default async function ModerationPage() {
               ) : (
                 <p style={{ color: 'var(--muted)', fontSize: 13 }}>No open score-review requests.</p>
               )}
+            </div>
+            <div className="panel" style={{ marginTop: 20 }}>
+              <div className="section-head" style={{ marginBottom: 12 }}>
+                <h3>AI vs tutor consistency</h3>
+                <span className="eyebrow">Flagged at ≥{AI_REVIEW_THRESHOLD} band difference</span>
+              </div>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Submission</th>
+                    <th>Tutor band</th>
+                    <th>AI estimate</th>
+                    <th>Difference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flagged.length ? (
+                    flagged.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.question}</td>
+                        <td>{s.overall_band}</td>
+                        <td>{s.ai_overall_band}</td>
+                        <td>
+                          <span className="status warn">{s.diff.toFixed(1)}</span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'center', color: 'var(--muted)' }}>
+                        No large AI/tutor disagreements in recently marked work
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>
+                AI estimates are generated when a student requests instant feedback — not a substitute for human
+                marking, just an independent second read to catch potential grading drift.
+              </p>
             </div>
           </section>
           <aside>

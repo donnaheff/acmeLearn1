@@ -34,3 +34,11 @@ verify_jwt = true
 verify_jwt = true
 [functions.publish-scheduled-articles]
 verify_jwt = false
+[functions.analyze-writing-submission]
+verify_jwt = true
+[functions.analyze-speaking-attempt]
+verify_jwt = true
+[functions.suggest-ticket-reply]
+verify_jwt = true
+[functions.study-assistant-chat]
+verify_jwt = true

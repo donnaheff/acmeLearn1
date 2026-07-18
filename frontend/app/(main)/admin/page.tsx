@@ -63,6 +63,12 @@ const ADMIN_TOOLS = [
     title: 'Tutor operations',
     description: 'Schedules, workload and capacity across tutors.',
   },
+  {
+    href: '/support-admin',
+    eyebrow: 'Support',
+    title: 'Support tickets',
+    description: 'Draft AI-suggested replies and track resolution.',
+  },
 ];
 
 export default async function AdminPage() {

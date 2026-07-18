@@ -12,6 +12,7 @@ const STUDENT_LINKS: Array<[string, string]> = [
   ['/learning', 'Learn'],
   ['/assignments', 'Assignments'],
   ['/lectures', 'Live classes'],
+  ['/assistant', 'Assistant'],
   ['/account', 'Account'],
 ];
 
