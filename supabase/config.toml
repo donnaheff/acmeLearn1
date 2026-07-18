@@ -1,0 +1,32 @@
+project_id = "acmelearn"
+
+[functions.create-zoom-meeting]
+verify_jwt = true
+[functions.get-lecture-access]
+verify_jwt = true
+[functions.get-host-access]
+verify_jwt = true
+[functions.zoom-webhook]
+verify_jwt = false
+[functions.send-reminders]
+verify_jwt = false
+[functions.get-recording-url]
+verify_jwt = true
+[functions.manage-enrollment]
+verify_jwt = true
+[functions.initialize-payment]
+verify_jwt = true
+[functions.payment-webhook]
+verify_jwt = false
+[functions.generate-recommendations]
+verify_jwt = true
+[functions.account-privacy]
+verify_jwt = true
+[functions.book-coaching]
+verify_jwt = true
+[functions.calculate-readiness]
+verify_jwt = true
+[functions.request-refund]
+verify_jwt = true
+[functions.launch-health]
+verify_jwt = true

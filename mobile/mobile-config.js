@@ -1,0 +1,2 @@
+// Mobile-only public configuration. Replace the production URL and anon key before release.
+window.ACME_CONFIG={...(window.ACME_CONFIG||{}),MOBILE_APP:true,OAUTH_REDIRECT:'com.acmelearn.app://auth-callback',SITE_URL:'https://learn.acmelearn.example'};

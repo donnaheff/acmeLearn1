@@ -1,0 +1,10 @@
+import {cors,json,admin,authUser,profile,zoomToken,encrypt,decrypt} from '../_shared/utils.ts';
+Deno.serve(async(req)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors});try{
+ const user=await authUser(req),p=await profile(user.id),{lecture_id}=await req.json();
+ const lectures=await admin(`/rest/v1/lectures?id=eq.${lecture_id}&select=*,courses(*)`);const l=lectures[0];if(!l)return json({error:'Lecture not found'},404);
+ const staff=['admin','tutor'].includes(p.role);const enrolled=await admin(`/rest/v1/enrollments?user_id=eq.${user.id}&course_id=eq.${l.course_id}&status=eq.active&select=id`);if(!staff&&!enrolled.length)return json({error:'Active course enrolment required'},403);
+ const now=Date.now(),opens=new Date(l.access_opens_at).getTime(),closes=new Date(l.access_closes_at).getTime();if(!staff&&now<opens)return json({locked:true,opens_at:l.access_opens_at,message:'The secure link appears 15 minutes before class'},423);if(!staff&&now>closes)return json({error:'This live session has ended'},410);
+ let regs=await admin(`/rest/v1/lecture_registrations?lecture_id=eq.${lecture_id}&user_id=eq.${user.id}&select=*`),reg=regs[0];
+ if(!reg){const zt=await zoomToken();const zr=await fetch(`https://api.zoom.us/v2/meetings/${l.zoom_meeting_id}/registrants`,{method:'POST',headers:{Authorization:`Bearer ${zt}`,'Content-Type':'application/json'},body:JSON.stringify({email:user.email,first_name:p.first_name||'Student',last_name:p.last_name||'AcmeLearn',auto_approve:true})});const z=await zr.json();if(!zr.ok)throw new Error(z.message||'Could not register for Zoom');const saved=await admin('/rest/v1/lecture_registrations',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({lecture_id,user_id:user.id,zoom_registrant_id:z.registrant_id,join_url_encrypted:await encrypt(z.join_url)})});reg=saved[0]}
+ return json({join_url:await decrypt(reg.join_url_encrypted),expires_at:l.access_closes_at,display_name:`${p.first_name} ${p.last_name}`.trim(),rules:{waiting_room:true,registered_only:true,do_not_share:true}});
+}catch(e){return json({error:e.message},400)}});

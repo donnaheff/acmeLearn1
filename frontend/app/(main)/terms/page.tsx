@@ -1,0 +1,63 @@
+export default function TermsPage() {
+  return (
+    <>
+      <header className="page-hero">
+        <div className="shell">
+          <span className="eyebrow">Effective 16 July 2026</span>
+          <h1 style={{ fontSize: 52 }}>Terms, refunds and cookies.</h1>
+          <p>A plain-language launch draft for AcmeLearn services.</p>
+        </div>
+      </header>
+      <main className="section">
+        <div className="shell legal">
+          <div className="auth-alert">
+            <strong>Legal review required:</strong> this operational draft must be reviewed by
+            qualified Nigerian counsel before commercial launch.
+          </div>
+          <h2>Service terms</h2>
+          <p>
+            AcmeLearn provides independent IELTS preparation and is not affiliated with or
+            endorsed by the owners of IELTS. Accounts are personal and private lecture links,
+            recordings and course materials must not be shared. Students must provide accurate
+            registration and Zoom display information.
+          </p>
+          <h2>Payments and subscriptions</h2>
+          <p>
+            Prices and billing frequency are displayed before checkout. Monthly plans renew until
+            cancelled. Cancellation stops future renewal but does not ordinarily reverse a
+            completed billing period.
+          </p>
+          <h2>Refund policy</h2>
+          <p>
+            A course purchase may be refunded within seven days when less than 10% of self-paced
+            content has been accessed and no private coaching session or marked submission has
+            been used. Duplicate or unauthorized payments are investigated promptly. Approved
+            refunds return to the original method, subject to provider processing times.
+          </p>
+          <h2>Lecture conduct</h2>
+          <p>
+            Harassment, recording without consent, impersonation and redistribution of class
+            content are prohibited. AcmeLearn may remove a participant to protect the class and
+            investigate serious conduct concerns.
+          </p>
+          <h2>Cookies and device storage</h2>
+          <p>
+            Essential storage keeps authentication, security state and offline drafts
+            functioning. Optional analytics and marketing technologies require consent where
+            applicable. Learners can reject optional cookies without losing core access.
+          </p>
+          <h2>Accessibility and accommodations</h2>
+          <p>
+            Students may request reasonable timing, display, caption or navigation accommodations
+            through support. AcmeLearn aims to meet WCAG 2.2 AA.
+          </p>
+          <h2>Contact</h2>
+          <p>
+            Questions and complaints may be submitted through the support centre. Nigerian law
+            governs these terms unless mandatory consumer law requires otherwise.
+          </p>
+        </div>
+      </main>
+    </>
+  );
+}
