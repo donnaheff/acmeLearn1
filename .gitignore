@@ -10,3 +10,5 @@ node_modules/
 .env
 local.properties
 .DS_Store
+tests/test-results/
+tests/playwright-report/

@@ -1,1 +1,1 @@
-{"name":"acmelearn-ielts","private":true,"scripts":{"serve":"python3 -m http.server 4173","test":"playwright test","test:security":"python3 tests/checks.py && python3 tests/performance_budget.py"},"devDependencies":{"@playwright/test":"^1.54.0"}}
+{"name":"acmelearn-ielts","private":true,"scripts":{"test":"playwright test","test:security":"python3 tests/checks.py && python3 tests/performance_budget.py","test:readiness":"python3 tests/production_readiness.py"},"devDependencies":{"@playwright/test":"^1.54.0"}}

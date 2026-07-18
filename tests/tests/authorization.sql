@@ -11,4 +11,29 @@ begin;
 -- 8. Assert a duplicated payment event_id cannot create a second enrollment or invoice.
 -- 9. Assert overlapping confirmed coaching_bookings for the launch tutor fail.
 -- 10. Assert expired coupon, over-capacity cohort and reused score review are rejected.
+--
+-- Added with the admin back office / AI / paid-Resources / staff-onboarding build-out
+-- (see database/app_extensions.sql):
+-- 11. Assert STUDENT_A can UPDATE their own writing_submissions row (draft text etc.)
+--     but a self-issued UPDATE setting overall_band, criterion_scores, marked_by,
+--     ai_overall_band, ai_criterion_scores or ai_feedback leaves those columns
+--     unchanged (writing_submissions_protect_fields trigger reverts them).
+-- 12. Same as #11 for speaking_attempts: criterion_scores, tutor_notes,
+--     ai_overall_band, ai_criterion_scores, ai_feedback
+--     (speaking_attempts_protect_fields trigger).
+-- 13. Same as #11 for support_tickets: status, priority, assigned_to,
+--     ai_suggested_reply (support_tickets_protect_fields trigger).
+-- 14. Assert a non-admin cannot call check_rate_limit() directly via
+--     /rest/v1/rpc/check_rate_limit (EXECUTE revoked from anon/authenticated).
+-- 15. Assert STUDENT_A cannot SELECT articles with status='draft' or 'submitted'
+--     that STUDENT_A did not author, and cannot SELECT status='published'
+--     articles unless is_paying_client() or STUDENT_A is staff.
+-- 16. Assert a STUDENT (not tutor/admin) cannot INSERT or UPDATE articles at all.
+-- 17. Assert only ADMIN can UPDATE public.products (plan pricing); a TUTOR or
+--     STUDENT attempt affects zero rows.
+-- 18. Assert only ADMIN can UPDATE public.profiles.role for another user's row
+--     (staff onboarding / privilege grants); a TUTOR or STUDENT attempt affects
+--     zero rows, and a STUDENT cannot promote themself.
+-- 19. Assert is_paying_client() returns true only for a user with a paid order
+--     or an active subscription, and false for a free/unauthenticated user.
 rollback;
