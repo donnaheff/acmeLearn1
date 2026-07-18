@@ -119,7 +119,7 @@ async function fetchRole(accessToken: string, userId: string): Promise<string | 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const session = readSession(request);
-  const requiresAuth = !PUBLIC_ROUTES.has(path);
+  const requiresAuth = !PUBLIC_ROUTES.has(path) && !path.startsWith('/resources/');
 
   if (requiresAuth && !session) {
     const url = request.nextUrl.clone();

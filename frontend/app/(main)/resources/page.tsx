@@ -24,9 +24,9 @@ export default function ResourcesPage() {
                 We annotate a real Task 2 response against all four examiner criteria—sentence by
                 sentence.
               </p>
-              <a href="#articles" className="btn btn-coral">
+              <Link href="/resources/band-7" className="btn btn-coral">
                 Read the guide →
-              </a>
+              </Link>
             </article>
             <aside className="promo-side" style={{ background: '#dcefeb', color: 'var(--navy)' }}>
               <span className="eyebrow">Free download</span>
