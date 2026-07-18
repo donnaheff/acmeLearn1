@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Manrope, DM_Sans } from 'next/font/google';
 import './globals.css';
 import { NativeTabBar } from '@/components/NativeTabBar';
-import { InstallBanner } from '@/components/InstallBanner';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { ToastProvider } from '@/components/ToastProvider';
 
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-manrope' });
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={isMobileApp ? 'native-app' : ''}>
         <ToastProvider>
           {children}
-          <InstallBanner />
+          <ServiceWorkerRegistration />
           {isMobileApp && <NativeTabBar />}
         </ToastProvider>
       </body>

@@ -83,8 +83,9 @@ Run in this order:
 2. `database/phase_extensions.sql`
 3. `database/launch_extensions.sql`
 4. `database/operational_extensions.sql`
-5. `database/seed.sql` (optional starter catalogue)
-6. `database/launch_seed.sql` (optional controlled-launch content)
+5. `database/app_extensions.sql` (articles CMS, audit trail, rate limiting, paid-Resources gate, AI feedback columns, staff/admin RLS)
+6. `database/seed.sql` (optional starter catalogue)
+7. `database/launch_seed.sql` (optional controlled-launch content)
 7. `database/cron.sql` after secrets and URLs are configured
 
 ## Production requirements
