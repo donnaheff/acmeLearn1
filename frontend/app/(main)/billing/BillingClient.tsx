@@ -108,7 +108,7 @@ export function BillingClient({
               <span className="eyebrow">{meta.eyebrow}</span>
               <h3>{product.name}</h3>
               <div className="amount">{formatAmount(product.display_amount_minor, product.display_currency)}</div>
-              <small>{product.billing_type === 'monthly' ? 'per month · cancel anytime' : 'one-time payment'}</small>
+              <small>{product.billing_type === 'monthly' ? 'per month' : 'one-time payment'}</small>
               {product.display_currency !== product.currency && (
                 <small style={{ display: 'block', color: 'var(--muted)' }}>
                   Approximate — charged in {formatAmount(product.amount_minor, product.currency)} ({product.currency})

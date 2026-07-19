@@ -30,7 +30,7 @@ export default async function BillingPage() {
           <span className="eyebrow">Flexible preparation</span>
           <h1 style={{ fontSize: 52 }}>Choose how you learn.</h1>
           <p>
-            Secure local payment through Paystack or international checkout through Stripe.
+            Secure local payment through Paystack.
             Course access activates only after a verified payment webhook.
           </p>
         </div>
@@ -38,8 +38,8 @@ export default async function BillingPage() {
       <main className="section section-soft">
         <div className="shell">
           <div className="auth-alert">
-            <strong>Current cohort availability:</strong> 4 places remain. Enrolment pauses
-            automatically at the tutor’s safe capacity limit.
+            <strong>Fair-capacity enrolment:</strong> Enrolment pauses automatically at the
+            tutor’s safe capacity limit, so every student gets timely feedback.
           </div>
         </div>
         <BillingClient
@@ -48,7 +48,7 @@ export default async function BillingPage() {
           subscriptionsEnabled={flags.subscriptions}
         />
         <div className="shell" style={{ textAlign: 'center', marginTop: 25, color: 'var(--muted)', fontSize: 13 }}>
-          Paystack · Stripe · Visa · Mastercard · Verve · Bank transfer
+          Paystack · Visa · Mastercard · Verve · Bank transfer
         </div>
       </main>
     </>

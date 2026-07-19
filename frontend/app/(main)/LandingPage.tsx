@@ -146,7 +146,7 @@ export function LandingPage({
               <div className="price">
                 {proCoachingPrice ? formatMoney(proCoachingPrice.amountMinor, proCoachingPrice.currency) : '—'}
               </div>
-              <p>per month · cancel anytime</p>
+              <p>per month</p>
               <ul>
                 <li>4 private tutor sessions</li>
                 <li>Unlimited writing reviews</li>
@@ -180,8 +180,8 @@ export function LandingPage({
             </div>
             <div className="trust-item">
               <span className="eyebrow">Payments</span>
-              <strong>Paystack + Stripe</strong>
-              <small>Verified checkout providers</small>
+              <strong>Paystack</strong>
+              <small>Verified checkout provider</small>
             </div>
           </div>
         </div>
