@@ -180,33 +180,35 @@ export function Dashboard({
                 </div>
               </div>
 
-              <div className="panel" style={{ marginTop: 22 }}>
-                <div className="section-head" style={{ marginBottom: 14 }}>
-                  <h3>Recommended for you</h3>
-                  <Link className="eyebrow" href="/practice">
-                    See all →
-                  </Link>
-                </div>
-                {recommendations.length ? (
-                  recommendations.map((rec, i) => (
-                    <div className="recommendation" key={i}>
-                      <div className="rec-icon">{REC_ICON[rec.skill] || '★'}</div>
-                      <div>
-                        <span className="rec-tag">Priority {rec.priority}</span>
-                        <strong>{rec.title}</strong>
-                        <p>{rec.reason}</p>
+              {flags.ai_recommendations && (
+                <div className="panel" style={{ marginTop: 22 }}>
+                  <div className="section-head" style={{ marginBottom: 14 }}>
+                    <h3>Recommended for you</h3>
+                    <Link className="eyebrow" href="/practice">
+                      See all →
+                    </Link>
+                  </div>
+                  {recommendations.length ? (
+                    recommendations.map((rec, i) => (
+                      <div className="recommendation" key={i}>
+                        <div className="rec-icon">{REC_ICON[rec.skill] || '★'}</div>
+                        <div>
+                          <span className="rec-tag">Priority {rec.priority}</span>
+                          <strong>{rec.title}</strong>
+                          <p>{rec.reason}</p>
+                        </div>
+                        <Link className="arrow" href={rec.activity_url}>
+                          →
+                        </Link>
                       </div>
-                      <Link className="arrow" href={rec.activity_url}>
-                        →
-                      </Link>
-                    </div>
-                  ))
-                ) : (
-                  <p style={{ color: 'var(--muted)', fontSize: 13 }}>
-                    Complete a diagnostic or submission for personalised recommendations.
-                  </p>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <p style={{ color: 'var(--muted)', fontSize: 13 }}>
+                      Complete a diagnostic or submission for personalised recommendations.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <aside>
