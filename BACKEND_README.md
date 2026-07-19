@@ -85,9 +85,10 @@ Run in this order:
 4. `database/operational_extensions.sql`
 5. `database/app_extensions.sql` (articles CMS, audit trail, rate limiting, paid-Resources gate, AI feedback columns, staff/admin RLS)
 6. `database/pilot_audience_fix.sql` (adds profiles.pilot, without which every 'pilot' audience feature flag is unreachable)
-7. `database/seed.sql` (optional starter catalogue)
-8. `database/launch_seed.sql` (optional controlled-launch content)
-9. `database/cron.sql` after secrets and URLs are configured
+7. `database/referral_rewards.sql` (links a referral code at signup to referred_user_id; payment-webhook credits the referrer)
+8. `database/seed.sql` (optional starter catalogue)
+9. `database/launch_seed.sql` (optional controlled-launch content)
+10. `database/cron.sql` after secrets and URLs are configured
 
 ## Production requirements
 

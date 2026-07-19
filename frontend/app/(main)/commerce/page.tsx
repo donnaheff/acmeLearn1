@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CouponForm } from './CouponForm';
 import { PricingForm } from './PricingForm';
 import { ScholarshipReview } from './ScholarshipReview';
+import { ReferralSettingsForm } from './ReferralSettingsForm';
 
 function money(amountMinor: number, currency = 'NGN') {
   return `${currency} ${(amountMinor / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -53,6 +54,13 @@ export default async function CommercePage() {
     .from('products')
     .select('id,name,amount_minor,currency,billing_type,active')
     .order('amount_minor', { ascending: true });
+
+  const { data: referralSetting } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'referral_reward_percent')
+    .maybeSingle();
+  const referralRewardPercent = Number(referralSetting?.value ?? 10);
 
   const paidTotal = paidOrdersThisMonth?.reduce((sum, o) => sum + (o.amount_minor || 0), 0) ?? 0;
   const paidCurrency = paidOrdersThisMonth?.[0]?.currency ?? 'NGN';
@@ -146,7 +154,7 @@ export default async function CommercePage() {
                         <tr key={i}>
                           <td>{r.code}</td>
                           <td>{r.referrer?.first_name} {r.referrer?.last_name}</td>
-                          <td>{money(r.reward_minor || 0)} pending</td>
+                          <td>{money(r.reward_minor || 0)} {r.status === 'rewarded' ? 'awarded' : 'pending'}</td>
                           <td>
                             <span className="status">{r.status}</span>
                           </td>
@@ -162,6 +170,7 @@ export default async function CommercePage() {
                   </tbody>
                 </table>
               </div>
+              <ReferralSettingsForm rewardPercent={referralRewardPercent} />
               <ScholarshipReview applications={(scholarshipApplications as any) ?? []} />
             </section>
             <aside>

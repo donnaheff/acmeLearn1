@@ -85,7 +85,8 @@ check((frontend / 'middleware.ts').exists(), 'middleware.ts must exist to gate p
 
 # --- RLS coverage across every schema file that ships to the repo ---------
 schema_files = ['schema.sql', 'phase_extensions.sql', 'launch_extensions.sql',
-                 'operational_extensions.sql', 'app_extensions.sql', 'pilot_audience_fix.sql']
+                 'operational_extensions.sql', 'app_extensions.sql', 'pilot_audience_fix.sql',
+                 'referral_rewards.sql']
 schema = ''
 for name in schema_files:
     path = database / name

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthHeader } from '@/components/AuthHeader';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 
@@ -16,6 +16,7 @@ const PROVIDERS: Array<[string, string]> = [
 export function SignupForm({ whatsappEnabled }: { whatsappEnabled: boolean }) {
   const supabase = useSupabase();
   const router = useRouter();
+  const referralCode = useSearchParams().get('ref');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [checkEmail, setCheckEmail] = useState(false);
@@ -36,6 +37,7 @@ export function SignupForm({ whatsappEnabled }: { whatsappEnabled: boolean }) {
           target_band: data.get('target') === '8.0+' ? 8 : Number(data.get('target')),
           phone: data.get('phone') || null,
           whatsapp_opt_in: data.get('whatsapp_opt_in') === 'on',
+          referral_code: referralCode || null,
         },
       },
     });
