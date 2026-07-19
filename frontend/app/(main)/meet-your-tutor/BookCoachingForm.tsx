@@ -22,10 +22,12 @@ export function BookCoachingForm({
   slots,
   tutorId,
   profileId,
+  sessionPrice,
 }: {
   slots: string[];
   tutorId: string | null;
   profileId: string | null;
+  sessionPrice: string;
 }) {
   const supabase = useSupabase();
   const router = useRouter();
@@ -85,7 +87,7 @@ export function BookCoachingForm({
             </label>
           ))}
           <div className="course-foot" style={{ margin: '20px 0' }}>
-            <strong>₦18,000</strong>
+            <strong>{sessionPrice}</strong>
             <span>{DURATION_MINUTES} minutes</span>
           </div>
           <button

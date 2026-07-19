@@ -140,17 +140,31 @@ async function fetchIsPayingClient(accessToken: string): Promise<boolean> {
   }
 }
 
+// Vercel's edge network sets this on every request; NG/GH see their own
+// currency, everyone else sees an approximate USD equivalent. Display-only —
+// actual checkout still charges in the product's real currency (NGN) via
+// Paystack, see lib/currency.ts.
+const CURRENCY_BY_COUNTRY: Record<string, string> = { NG: 'NGN', GH: 'GHS' };
+
+function detectCurrency(request: NextRequest): string {
+  const country = request.headers.get('x-vercel-ip-country') || '';
+  return CURRENCY_BY_COUNTRY[country] || 'USD';
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const session = readSession(request);
   const requiresAuth = !PUBLIC_ROUTES.has(path);
+  const currency = detectCurrency(request);
 
   if (requiresAuth && !session) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('required', '1');
     url.searchParams.set('returnTo', path);
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    redirect.cookies.set('acme_currency', currency, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+    return redirect;
   }
 
   const roleRouteKey =
@@ -166,7 +180,9 @@ export async function middleware(request: NextRequest) {
     if (!role || !allowedRoles.includes(role)) {
       const url = request.nextUrl.clone();
       url.pathname = '/restricted';
-      return NextResponse.redirect(url);
+      const redirect = NextResponse.redirect(url);
+      redirect.cookies.set('acme_currency', currency, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+      return redirect;
     }
   }
 
@@ -181,12 +197,22 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = '/restricted';
         url.searchParams.set('reason', 'paid');
-        return NextResponse.redirect(url);
+        const redirect = NextResponse.redirect(url);
+        redirect.cookies.set('acme_currency', currency, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+        return redirect;
       }
     }
   }
 
-  return NextResponse.next();
+  // Setting the cookie on the response only reaches the browser's *next*
+  // request — Server Components rendering *this* request read cookies()
+  // from the incoming request, so the currency has to be added there too
+  // (via the forwarded request headers) or the very first visit falls back
+  // to the default instead of the just-detected country.
+  request.cookies.set('acme_currency', currency);
+  const response = NextResponse.next({ request: { headers: request.headers } });
+  response.cookies.set('acme_currency', currency, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+  return response;
 }
 
 export const config = {

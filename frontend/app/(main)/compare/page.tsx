@@ -2,18 +2,22 @@ import Link from 'next/link';
 import { CompareForm } from './CompareForm';
 import { getCompareContent } from '@/lib/siteContent';
 import { createClient } from '@/lib/supabase/server';
+import { getDisplayCurrency, convertFromNgnMinor, formatMoney, type DisplayCurrency } from '@/lib/currency';
 
-function money(row: { amount_minor: number; currency: string; billing_type: string } | undefined) {
+async function money(
+  row: { amount_minor: number; currency: string; billing_type: string } | undefined,
+  displayCurrency: DisplayCurrency,
+) {
   if (!row) return '—';
-  const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: row.currency, maximumFractionDigits: 0 }).format(
-    row.amount_minor / 100,
-  );
+  const shown = row.currency === 'NGN' ? await convertFromNgnMinor(row.amount_minor, displayCurrency) : row.amount_minor;
+  const amount = formatMoney(shown, row.currency === 'NGN' ? displayCurrency : row.currency);
   return row.billing_type === 'monthly' ? `${amount}/month` : amount;
 }
 
 export default async function ComparePage() {
   const content = await getCompareContent();
   const supabase = await createClient();
+  const displayCurrency = await getDisplayCurrency();
   const { data: products } = await supabase
     .from('products')
     .select('name,amount_minor,currency,billing_type')
@@ -22,6 +26,12 @@ export default async function ComparePage() {
   const essentials = products?.find((p) => p.name.includes('Essentials'));
   const accelerator = products?.find((p) => p.name.includes('Accelerator'));
   const proCoaching = products?.find((p) => p.name.includes('Coaching'));
+  const [essentialsPrice, acceleratorPrice, proCoachingPrice] = await Promise.all([
+    money(essentials, displayCurrency),
+    money(accelerator, displayCurrency),
+    money(proCoaching, displayCurrency),
+  ]);
+  const isConverted = displayCurrency !== 'NGN';
 
   return (
     <>
@@ -111,15 +121,23 @@ export default async function ComparePage() {
                     <b>Free</b>
                   </td>
                   <td>
-                    <b>{money(essentials)}</b>
+                    <b>{essentialsPrice}</b>
                   </td>
                   <td>
-                    <b>{money(accelerator)}</b>
+                    <b>{acceleratorPrice}</b>
                   </td>
                   <td>
-                    <b>{money(proCoaching)}</b>
+                    <b>{proCoachingPrice}</b>
                   </td>
                 </tr>
+                {isConverted && (
+                  <tr>
+                    <td></td>
+                    <td colSpan={3} style={{ fontSize: 11, color: 'var(--muted)' }}>
+                      Approximate {displayCurrency} equivalent — you&apos;re charged in Nigerian naira (₦) at checkout.
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td></td>
                   <td>

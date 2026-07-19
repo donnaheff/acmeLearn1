@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionProfile } from '@/lib/session';
 import { getFeatureFlags } from '@/lib/featureFlags';
+import { getDisplayCurrency, convertFromNgnMinor, formatMoney, COACHING_SESSION_MINOR_NGN } from '@/lib/currency';
 
 export default async function MarketplacePage() {
   const profile = await getSessionProfile();
@@ -23,6 +24,9 @@ export default async function MarketplacePage() {
       </main>
     );
   }
+
+  const displayCurrency = await getDisplayCurrency();
+  const hourlyRate = formatMoney(await convertFromNgnMinor(COACHING_SESSION_MINOR_NGN, displayCurrency), displayCurrency);
 
   return (
     <>
@@ -59,7 +63,7 @@ export default async function MarketplacePage() {
               </p>
               <p>Launch profile · learner reviews begin after the pilot</p>
               <div className="course-foot">
-                <strong>From ₦18,000/hr</strong>
+                <strong>From {hourlyRate}/hr</strong>
                 <Link className="btn btn-dark" href="/meet-your-tutor">
                   Profile &amp; times →
                 </Link>

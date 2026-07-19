@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/useSupabase';
 import { useToast } from '@/components/ToastProvider';
 import { functionErrorMessage } from '@/lib/functionError';
+import { formatMoney as formatAmount } from '@/lib/money';
 
 export type ProductRow = {
   id: string;
@@ -13,6 +14,8 @@ export type ProductRow = {
   amount_minor: number;
   currency: string;
   billing_type: 'one_time' | 'monthly' | null;
+  display_amount_minor: number;
+  display_currency: string;
 };
 
 // Marketing copy the products table doesn't store — kept keyed by product name so
@@ -42,16 +45,6 @@ const PRODUCT_META: Record<
 };
 
 const DEFAULT_META = { eyebrow: 'Plan', featured: false, features: [] as string[], buttonClass: 'btn-outline' };
-
-function formatAmount(row: ProductRow) {
-  try {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: row.currency }).format(
-      row.amount_minor / 100,
-    );
-  } catch {
-    return `${row.currency} ${(row.amount_minor / 100).toFixed(2)}`;
-  }
-}
 
 export function BillingClient({
   products,
@@ -114,8 +107,13 @@ export function BillingClient({
             >
               <span className="eyebrow">{meta.eyebrow}</span>
               <h3>{product.name}</h3>
-              <div className="amount">{formatAmount(product)}</div>
+              <div className="amount">{formatAmount(product.display_amount_minor, product.display_currency)}</div>
               <small>{product.billing_type === 'monthly' ? 'per month · cancel anytime' : 'one-time payment'}</small>
+              {product.display_currency !== product.currency && (
+                <small style={{ display: 'block', color: 'var(--muted)' }}>
+                  Approximate — charged in {formatAmount(product.amount_minor, product.currency)} ({product.currency})
+                </small>
+              )}
               <ul>
                 {meta.features.map((f) => (
                   <li key={f}>{f}</li>

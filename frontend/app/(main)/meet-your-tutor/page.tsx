@@ -1,6 +1,7 @@
 import { getMeetYourTutorContent } from '@/lib/siteContent';
 import { getSessionProfile } from '@/lib/session';
 import { createClient } from '@/lib/supabase/server';
+import { getDisplayCurrency, convertFromNgnMinor, formatMoney, COACHING_SESSION_MINOR_NGN } from '@/lib/currency';
 import { BookCoachingForm } from './BookCoachingForm';
 
 function upcomingSlots() {
@@ -25,6 +26,8 @@ export default async function MeetYourTutorPage() {
     .maybeSingle();
   const tutorId = (setting?.value as { id?: string } | null)?.id ?? null;
   const slots = upcomingSlots();
+  const displayCurrency = await getDisplayCurrency();
+  const sessionPrice = formatMoney(await convertFromNgnMinor(COACHING_SESSION_MINOR_NGN, displayCurrency), displayCurrency);
 
   return (
     <>
@@ -116,7 +119,7 @@ export default async function MeetYourTutorPage() {
             </div>
           </section>
           <aside id="availability">
-            <BookCoachingForm slots={slots} tutorId={tutorId} profileId={profile?.id ?? null} />
+            <BookCoachingForm slots={slots} tutorId={tutorId} profileId={profile?.id ?? null} sessionPrice={sessionPrice} />
             <div className="panel" style={{ marginTop: 20 }}>
               <span className="eyebrow">Specialisms</span>
               <p>Academic Writing Task 1 &amp; 2</p>

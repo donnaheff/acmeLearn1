@@ -1,17 +1,27 @@
 import { getSessionProfile } from '@/lib/session';
 import { getFeatureFlags } from '@/lib/featureFlags';
 import { createClient } from '@/lib/supabase/server';
+import { getDisplayCurrency, convertFromNgnMinor } from '@/lib/currency';
 import { BillingClient, type ProductRow } from './BillingClient';
 
 export default async function BillingPage() {
   const profile = await getSessionProfile();
   const flags = await getFeatureFlags(profile);
   const supabase = await createClient();
+  const displayCurrency = await getDisplayCurrency();
   const { data } = await supabase
     .from('products')
     .select('id,course_id,name,amount_minor,currency,billing_type')
     .eq('active', true)
     .order('amount_minor', { ascending: true });
+
+  const products = await Promise.all(
+    (data ?? []).map(async (p) => ({
+      ...p,
+      display_amount_minor: p.currency === 'NGN' ? await convertFromNgnMinor(p.amount_minor, displayCurrency) : p.amount_minor,
+      display_currency: p.currency === 'NGN' ? displayCurrency : p.currency,
+    })),
+  );
 
   return (
     <>
@@ -33,7 +43,7 @@ export default async function BillingPage() {
           </div>
         </div>
         <BillingClient
-          products={(data ?? []) as ProductRow[]}
+          products={products as ProductRow[]}
           isSignedIn={!!profile}
           subscriptionsEnabled={flags.subscriptions}
         />
