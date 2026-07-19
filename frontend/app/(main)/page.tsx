@@ -3,6 +3,7 @@ import { getSessionProfile } from '@/lib/session';
 import { getHomeContent } from '@/lib/siteContent';
 import { getFeatureFlags } from '@/lib/featureFlags';
 import { createClient } from '@/lib/supabase/server';
+import { getDisplayCurrency, convertFromNgnMinor } from '@/lib/currency';
 import { LandingPage } from './LandingPage';
 import { Dashboard, type DashboardLecture } from './Dashboard';
 
@@ -10,10 +11,29 @@ export default async function HomePage() {
   const profile = await getSessionProfile();
 
   if (!profile) {
-    const content = await getHomeContent();
+    const supabase = await createClient();
+    const [content, displayCurrency, { data: proCoaching }] = await Promise.all([
+      getHomeContent(),
+      getDisplayCurrency(),
+      supabase
+        .from('products')
+        .select('amount_minor,currency')
+        .eq('name', 'Pro Coaching')
+        .eq('active', true)
+        .maybeSingle(),
+    ]);
+    const proCoachingPrice = proCoaching
+      ? {
+          amountMinor:
+            proCoaching.currency === 'NGN'
+              ? await convertFromNgnMinor(proCoaching.amount_minor, displayCurrency)
+              : proCoaching.amount_minor,
+          currency: proCoaching.currency === 'NGN' ? displayCurrency : proCoaching.currency,
+        }
+      : null;
     return (
       <>
-        <LandingPage content={content} />
+        <LandingPage content={content} proCoachingPrice={proCoachingPrice} />
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000"

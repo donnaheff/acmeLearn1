@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { AdSlot } from '@/components/AdSlot';
+import { formatMoney } from '@/lib/money';
 
 export function LandingPage({
   content,
+  proCoachingPrice,
 }: {
   content: { hero_heading: string; hero_body: string; hero_cta: string; campaign_label: string };
+  proCoachingPrice: { amountMinor: number; currency: string } | null;
 }) {
   return (
     <main id="landing">
@@ -140,7 +143,9 @@ export function LandingPage({
               <span className="eyebrow" style={{ color: 'white' }}>
                 Pro coaching
               </span>
-              <div className="price">GH₵1,200</div>
+              <div className="price">
+                {proCoachingPrice ? formatMoney(proCoachingPrice.amountMinor, proCoachingPrice.currency) : '—'}
+              </div>
               <p>per month · cancel anytime</p>
               <ul>
                 <li>4 private tutor sessions</li>
