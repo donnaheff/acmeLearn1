@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { CouponForm } from './CouponForm';
 import { PricingForm } from './PricingForm';
+import { ScholarshipReview } from './ScholarshipReview';
 
 function money(amountMinor: number, currency = 'NGN') {
   return `${currency} ${(amountMinor / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -20,6 +21,7 @@ export default async function CommercePage() {
     { data: redemptions },
     { count: scholarshipCount },
     { count: scholarshipPendingCount },
+    { data: scholarshipApplications },
     { data: refunds },
     { data: referrals },
   ] = await Promise.all([
@@ -30,6 +32,11 @@ export default async function CommercePage() {
     supabase.from('coupon_redemptions').select('discount_minor'),
     supabase.from('scholarship_applications').select('id', { count: 'exact', head: true }),
     supabase.from('scholarship_applications').select('id', { count: 'exact', head: true }).eq('status', 'submitted'),
+    supabase
+      .from('scholarship_applications')
+      .select('id,statement,status,discount_percent,created_at,courses(title),profiles!user_id(first_name,last_name)')
+      .order('created_at', { ascending: false })
+      .limit(20),
     supabase
       .from('refunds')
       .select('id,amount_minor,reason,status,created_at,orders(provider_reference,currency),requester:profiles!requested_by(first_name,last_name)')
@@ -155,6 +162,7 @@ export default async function CommercePage() {
                   </tbody>
                 </table>
               </div>
+              <ScholarshipReview applications={(scholarshipApplications as any) ?? []} />
             </section>
             <aside>
               <PricingForm products={products ?? []} />
