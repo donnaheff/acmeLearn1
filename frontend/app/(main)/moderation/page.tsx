@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { ScoreReviewList } from './ScoreReviewList';
 
 const AI_REVIEW_THRESHOLD = 0.5;
 
@@ -92,22 +93,7 @@ export default async function ModerationPage() {
             </div>
             <div className="panel" style={{ marginTop: 20 }}>
               <h3>Student score-review requests</h3>
-              {reviewRequests?.length ? (
-                reviewRequests.map((r) => (
-                  <div className="recommendation" key={r.id}>
-                    <div className="rec-icon">
-                      {(r.writing_submissions?.question || 'SR').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <strong>{r.writing_submissions?.question || 'Submission'}</strong>
-                      <p>“{r.reason}” · one review permitted</p>
-                    </div>
-                    <button className="btn btn-dark">Review</button>
-                  </div>
-                ))
-              ) : (
-                <p style={{ color: 'var(--muted)', fontSize: 13 }}>No open score-review requests.</p>
-              )}
+              <ScoreReviewList requests={reviewRequests ?? []} />
             </div>
             <div className="panel" style={{ marginTop: 20 }}>
               <div className="section-head" style={{ marginBottom: 12 }}>

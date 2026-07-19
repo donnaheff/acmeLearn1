@@ -33,8 +33,8 @@ export function Footer() {
           <div>
             <h4>Company</h4>
             <div className="footer-links">
-              <a href="#">About us</a>
-              <a href="#">Careers</a>
+              <Link href="/about">About us</Link>
+              <Link href="/careers">Careers</Link>
               <Link href="/terms">Terms &amp; refunds</Link>
               <Link href="/privacy">Privacy controls</Link>
             </div>

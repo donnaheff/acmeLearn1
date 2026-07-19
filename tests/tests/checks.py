@@ -47,7 +47,7 @@ PUBLIC_ROUTES = [
     '', 'login', 'signup', 'reset-password', 'courses', 'practice',
     'marketplace', 'meet-your-tutor', 'pilot', 'compare',
     'service-standards', 'support', 'research', 'terms', 'privacy',
-    'billing', 'learning', 'offline',
+    'billing', 'learning', 'offline', 'about', 'careers',
 ]
 PAID_ROUTES = ['resources', 'assistant']
 ROLE_ROUTES = [
@@ -122,7 +122,7 @@ EXPECTED_FUNCTIONS = (
     'get-lecture-access', 'get-recording-url', 'initialize-payment',
     'invite-staff-member', 'launch-health', 'manage-enrollment',
     'payment-webhook', 'publish-scheduled-articles', 'request-refund',
-    'send-reminders', 'study-assistant-chat', 'suggest-ticket-reply',
+    'replay-dead-letter', 'send-reminders', 'study-assistant-chat', 'suggest-ticket-reply',
     'transcribe-speaking-attempt', 'zoom-webhook',
 )
 for fn in EXPECTED_FUNCTIONS:

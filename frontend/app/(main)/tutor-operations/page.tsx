@@ -1,6 +1,6 @@
 import { getSessionProfile } from '@/lib/session';
 import { createClient } from '@/lib/supabase/server';
-import { BlockTimeForm, ClassChangeButton } from './TutorOperationsClient';
+import { BlockTimeForm, ClassChangeButton, EditAvailabilityButton, CohortWaitlistButton } from './TutorOperationsClient';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -22,7 +22,7 @@ export default async function TutorOperationsPage() {
     .order('weekday', { ascending: true });
   if (isTutor && profile) availabilityQuery = availabilityQuery.eq('tutor_id', profile.id);
 
-  let cohortsQuery = supabase.from('cohorts').select('id,name,max_students').eq('status', 'open');
+  let cohortsQuery = supabase.from('cohorts').select('id,name,max_students,course_id').eq('status', 'open');
   if (isTutor && profile) cohortsQuery = cohortsQuery.eq('tutor_id', profile.id);
 
   const [{ data: availability }, { data: cohorts }] = await Promise.all([availabilityQuery, cohortsQuery]);
@@ -88,7 +88,7 @@ export default async function TutorOperationsPage() {
                             {formatTime(a.starts_at)}–{formatTime(a.ends_at)}
                           </td>
                           <td>
-                            <button className="pill">Edit</button>
+                            <EditAvailabilityButton id={a.id} startsAt={a.starts_at} endsAt={a.ends_at} />
                           </td>
                         </tr>
                       ))
@@ -147,12 +147,11 @@ export default async function TutorOperationsPage() {
               <div className="panel" style={{ marginTop: 20 }}>
                 <div className="section-head">
                   <h3>Cohort capacity</h3>
-                  <button className="btn btn-outline">Create waitlist</button>
                 </div>
                 <div className="progress-list">
                   {cohortCapacity.length ? (
                     cohortCapacity.map((c) => (
-                      <div className="progress-row" key={c.id}>
+                      <div className="progress-row" key={c.id} style={{ gridTemplateColumns: '90px 1fr 60px auto' }}>
                         <b>{c.name}</b>
                         <div className="bar">
                           <span style={{ width: `${c.max_students ? Math.min(100, (c.members / c.max_students) * 100) : 0}%` }} />
@@ -160,6 +159,7 @@ export default async function TutorOperationsPage() {
                         <strong>
                           {c.members}/{c.max_students ?? '—'}
                         </strong>
+                        <CohortWaitlistButton cohortId={c.id} courseId={c.course_id} />
                       </div>
                     ))
                   ) : (

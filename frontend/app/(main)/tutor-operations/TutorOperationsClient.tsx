@@ -67,3 +67,76 @@ export function ClassChangeButton() {
     </button>
   );
 }
+
+export function EditAvailabilityButton({
+  id,
+  startsAt,
+  endsAt,
+}: {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+}) {
+  const supabase = useSupabase();
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+
+  async function edit() {
+    const newStart = prompt('New start time (HH:MM, 24-hour):', startsAt.slice(0, 5));
+    if (newStart === null) return;
+    const newEnd = prompt('New end time (HH:MM, 24-hour):', endsAt.slice(0, 5));
+    if (newEnd === null) return;
+    if (!/^\d{2}:\d{2}$/.test(newStart) || !/^\d{2}:\d{2}$/.test(newEnd)) {
+      toast('Enter times as HH:MM, e.g. 14:30.');
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase
+      .from('tutor_availability')
+      .update({ starts_at: newStart, ends_at: newEnd })
+      .eq('id', id);
+    setBusy(false);
+    if (error) {
+      toast(error.message);
+      return;
+    }
+    toast('Availability window updated.');
+    router.refresh();
+  }
+
+  return (
+    <button className="pill" disabled={busy} onClick={edit}>
+      {busy ? 'Saving…' : 'Edit'}
+    </button>
+  );
+}
+
+export function CohortWaitlistButton({ cohortId, courseId }: { cohortId: string; courseId: string }) {
+  const supabase = useSupabase();
+  const router = useRouter();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+
+  async function addToWaitlist() {
+    const email = prompt('Student email to add to this cohort (waitlisted automatically if full):');
+    if (!email) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('manage-enrollment', {
+      body: { email, course_id: courseId, cohort_id: cohortId },
+    });
+    setBusy(false);
+    if (error) {
+      toast(error.message);
+      return;
+    }
+    toast(data?.waitlisted ? `Waitlisted at position ${data.position}.` : 'Student enrolled directly — cohort had room.');
+    router.refresh();
+  }
+
+  return (
+    <button className="btn btn-outline" disabled={busy} onClick={addToWaitlist}>
+      {busy ? 'Adding…' : '+ Waitlist'}
+    </button>
+  );
+}

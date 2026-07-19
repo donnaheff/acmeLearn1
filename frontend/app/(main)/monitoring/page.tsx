@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { ReplayWebhookButton, RestoreDrillButton } from './MonitoringActions';
+import { RestoreDrillButton } from './MonitoringActions';
+import { DeadLetterQueue, type DeadLetter } from './DeadLetterQueue';
 
 const SERVICES: Array<{ label: string; keywords: string[] }> = [
   { label: 'Supabase database', keywords: ['supabase', 'database'] },
@@ -11,9 +12,14 @@ const SERVICES: Array<{ label: string; keywords: string[] }> = [
 
 export default async function MonitoringPage() {
   const supabase = await createClient();
-  const [{ data: errorEvents }, { data: incidents }] = await Promise.all([
+  const [{ data: errorEvents }, { data: incidents }, { data: deadLetters }] = await Promise.all([
     supabase.from('error_events').select('*').order('created_at', { ascending: false }).limit(50),
     supabase.from('service_incidents').select('*').neq('status', 'resolved').order('started_at', { ascending: false }),
+    supabase
+      .from('webhook_dead_letters')
+      .select('id,provider,event_id,error,failed_at,replayed_at')
+      .order('failed_at', { ascending: false })
+      .limit(20),
   ]);
 
   const serviceStatus = SERVICES.map((s) => {
@@ -109,16 +115,7 @@ export default async function MonitoringPage() {
               <p style={{ color: 'var(--muted)' }}>
                 Events retry with exponential backoff. After five attempts they move here for audited replay.
               </p>
-              <table className="data-table">
-                <tbody>
-                  <tr>
-                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--muted)' }}>
-                      Illustrative — webhook_dead_letters is service-role only
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <ReplayWebhookButton />
+              <DeadLetterQueue events={(deadLetters ?? []) as DeadLetter[]} />
             </div>
             <div className="panel">
               <span className="eyebrow">Web performance</span>

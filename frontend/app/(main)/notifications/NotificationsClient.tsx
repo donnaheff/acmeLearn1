@@ -25,10 +25,44 @@ function timeAgo(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
-export function NotificationsClient({ notifications: initial }: { notifications: Notification[] }) {
+export type Preferences = {
+  whatsapp_opt_in: boolean;
+  email_reminders_opt_in: boolean;
+  marketing_opt_in: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+};
+
+export function NotificationsClient({
+  notifications: initial,
+  profileId,
+  preferences,
+}: {
+  notifications: Notification[];
+  profileId: string;
+  preferences: Preferences;
+}) {
   const supabase = useSupabase();
   const toast = useToast();
   const [notifications, setNotifications] = useState(initial);
+  const [prefs, setPrefs] = useState(preferences);
+  const [saving, setSaving] = useState(false);
+
+  async function savePreferences() {
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        whatsapp_opt_in: prefs.whatsapp_opt_in,
+        email_reminders_opt_in: prefs.email_reminders_opt_in,
+        marketing_opt_in: prefs.marketing_opt_in,
+        quiet_hours_start: prefs.quiet_hours_start,
+        quiet_hours_end: prefs.quiet_hours_end,
+      })
+      .eq('id', profileId);
+    setSaving(false);
+    toast(error ? error.message : 'Preferences saved.');
+  }
 
   async function markRead(id: string) {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
@@ -103,23 +137,51 @@ export function NotificationsClient({ notifications: initial }: { notifications:
               <span className="eyebrow">Preferences</span>
               <h3 style={{ margin: '10px 0 18px' }}>How we contact you</h3>
               <label className="check">
-                <input defaultChecked type="checkbox" /> Academic email reminders
+                <input
+                  type="checkbox"
+                  checked={prefs.email_reminders_opt_in}
+                  onChange={(e) => setPrefs((p) => ({ ...p, email_reminders_opt_in: e.target.checked }))}
+                />{' '}
+                Academic email reminders
               </label>
               <label className="check">
-                <input defaultChecked type="checkbox" /> WhatsApp lecture reminders
+                <input
+                  type="checkbox"
+                  checked={prefs.whatsapp_opt_in}
+                  onChange={(e) => setPrefs((p) => ({ ...p, whatsapp_opt_in: e.target.checked }))}
+                />{' '}
+                WhatsApp lecture reminders
               </label>
               <label className="check">
-                <input type="checkbox" /> Product and marketing updates
+                <input
+                  type="checkbox"
+                  checked={prefs.marketing_opt_in}
+                  onChange={(e) => setPrefs((p) => ({ ...p, marketing_opt_in: e.target.checked }))}
+                />{' '}
+                Product and marketing updates
               </label>
               <div className="field">
                 <label>QUIET HOURS</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <input type="time" defaultValue="21:00" />
-                  <input type="time" defaultValue="07:00" />
+                  <input
+                    type="time"
+                    value={prefs.quiet_hours_start}
+                    onChange={(e) => setPrefs((p) => ({ ...p, quiet_hours_start: e.target.value }))}
+                  />
+                  <input
+                    type="time"
+                    value={prefs.quiet_hours_end}
+                    onChange={(e) => setPrefs((p) => ({ ...p, quiet_hours_end: e.target.value }))}
+                  />
                 </div>
               </div>
-              <button className="btn btn-dark" style={{ width: '100%', marginTop: 18 }}>
-                Save preferences
+              <button
+                className="btn btn-dark"
+                style={{ width: '100%', marginTop: 18 }}
+                disabled={saving}
+                onClick={savePreferences}
+              >
+                {saving ? 'Saving…' : 'Save preferences'}
               </button>
             </div>
           </aside>

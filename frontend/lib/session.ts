@@ -9,6 +9,10 @@ export type Profile = {
   timezone: string;
   target_band: number | null;
   whatsapp_opt_in: boolean;
+  email_reminders_opt_in: boolean;
+  marketing_opt_in: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
   email?: string | null;
   pilot?: boolean;
 };

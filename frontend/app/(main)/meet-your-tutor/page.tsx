@@ -1,7 +1,31 @@
 import { getMeetYourTutorContent } from '@/lib/siteContent';
+import { getSessionProfile } from '@/lib/session';
+import { createClient } from '@/lib/supabase/server';
+import { BookCoachingForm } from './BookCoachingForm';
+
+function upcomingSlots() {
+  const now = new Date();
+  const offsets = [2, 4, 7];
+  return offsets.map((days) => {
+    const d = new Date(now);
+    d.setUTCDate(d.getUTCDate() + days);
+    d.setUTCHours(16, 0, 0, 0); // 5:00 PM WAT (UTC+1)
+    return d.toISOString();
+  });
+}
 
 export default async function MeetYourTutorPage() {
   const content = await getMeetYourTutorContent();
+  const profile = await getSessionProfile();
+  const supabase = await createClient();
+  const { data: setting } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'launch_tutor_id')
+    .maybeSingle();
+  const tutorId = (setting?.value as { id?: string } | null)?.id ?? null;
+  const slots = upcomingSlots();
+
   return (
     <>
       <header className="page-hero">
@@ -92,33 +116,7 @@ export default async function MeetYourTutorPage() {
             </div>
           </section>
           <aside id="availability">
-            <div className="panel">
-              <span className="eyebrow">Next available sessions</span>
-              <h3 style={{ margin: '10px 0 18px' }}>Book 1:1 coaching</h3>
-              <label className="option">
-                <input type="radio" name="slot" value="2026-07-17T16:00:00Z" defaultChecked /> Fri 17
-                Jul · 5:00 PM WAT
-              </label>
-              <label className="option">
-                <input type="radio" name="slot" value="2026-07-18T12:00:00Z" /> Sat 18 Jul · 1:00 PM
-                WAT
-              </label>
-              <label className="option">
-                <input type="radio" name="slot" value="2026-07-20T17:30:00Z" /> Mon 20 Jul · 6:30 PM
-                WAT
-              </label>
-              <div className="course-foot" style={{ margin: '20px 0' }}>
-                <strong>GH₵18,000</strong>
-                <span>50 minutes</span>
-              </div>
-              <button className="btn btn-coral" id="bookCoaching" style={{ width: '100%' }}>
-                Reserve selected time →
-              </button>
-              <p style={{ fontSize: 11, color: 'var(--muted)' }}>
-                Sessions are delivered through AcmeLearn Zoom access. Off-platform payments are
-                prohibited.
-              </p>
-            </div>
+            <BookCoachingForm slots={slots} tutorId={tutorId} profileId={profile?.id ?? null} />
             <div className="panel" style={{ marginTop: 20 }}>
               <span className="eyebrow">Specialisms</span>
               <p>Academic Writing Task 1 &amp; 2</p>

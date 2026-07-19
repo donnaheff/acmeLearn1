@@ -38,12 +38,6 @@ export default async function MarketplacePage() {
       </header>
       <main className="section section-soft">
         <div className="shell">
-          <div className="filters" style={{ marginBottom: 28 }}>
-            <button className="pill active">All specialists</button>
-            <button className="pill">Writing</button>
-            <button className="pill">Speaking</button>
-            <button className="pill">Band 8+</button>
-          </div>
           <div className="single-tutor">
             <picture>
               <source media="(max-width:700px)" srcSet="/assets/tutor-sophie-640.avif" type="image/avif" />
@@ -65,7 +59,7 @@ export default async function MarketplacePage() {
               </p>
               <p>Launch profile · learner reviews begin after the pilot</p>
               <div className="course-foot">
-                <strong>From GH₵18k/hr</strong>
+                <strong>From ₦18,000/hr</strong>
                 <Link className="btn btn-dark" href="/meet-your-tutor">
                   Profile &amp; times →
                 </Link>

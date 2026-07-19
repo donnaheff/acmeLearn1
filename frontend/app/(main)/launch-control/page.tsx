@@ -1,6 +1,7 @@
 import { getSessionProfile } from '@/lib/session';
 import { createClient } from '@/lib/supabase/server';
 import { LaunchGatesPanel, FeatureFlagsPanel } from './LaunchControlClient';
+import { ReleaseControlPanel, type ReleaseRecord } from './ReleaseControlPanel';
 
 const FLAG_ORDER = [
   'core_learning',
@@ -18,10 +19,16 @@ export default async function LaunchControlPage() {
   const profile = await getSessionProfile();
   const supabase = await createClient();
 
-  const [{ data: launchChecks }, { data: featureFlags }] = await Promise.all([
+  const [{ data: launchChecks }, { data: featureFlags }, { data: releases }] = await Promise.all([
     supabase.from('launch_checks').select('*').order('check_key'),
     supabase.from('feature_flags').select('*').order('flag'),
+    supabase
+      .from('release_records')
+      .select('id,version,environment,status,migration_check,tests_passed,accessibility_passed,backup_verified,rollback_plan')
+      .order('created_at', { ascending: false })
+      .limit(1),
   ]);
+  const latestRelease = (releases?.[0] as ReleaseRecord | undefined) ?? null;
 
   const orderedFlags = (featureFlags ?? [])
     .filter((f) => FLAG_ORDER.includes(f.flag))
@@ -84,29 +91,7 @@ export default async function LaunchControlPage() {
           </section>
           <aside>
             {profile && <FeatureFlagsPanel profile={profile} featureFlags={orderedFlags} />}
-            <div className="panel" style={{ marginTop: 20 }}>
-              <span className="eyebrow">Release 0.9.0</span>
-              <h3 style={{ margin: '8px 0' }}>Staging approval</h3>
-              <div className="phase-step">
-                <b>✓</b>
-                <span>Migration check</span>
-              </div>
-              <div className="phase-step">
-                <b>✓</b>
-                <span>Automated security tests</span>
-              </div>
-              <div className="phase-step">
-                <b>3</b>
-                <span>Accessibility audit pending</span>
-              </div>
-              <div className="phase-step">
-                <b>4</b>
-                <span>Approval and release notes</span>
-              </div>
-              <button className="btn btn-outline" style={{ width: '100%', marginTop: 15 }}>
-                View rollback plan
-              </button>
-            </div>
+            <ReleaseControlPanel release={latestRelease} />
           </aside>
         </div>
       </div>

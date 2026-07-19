@@ -6,7 +6,7 @@ const PUBLIC_ROUTES = new Set([
   '/', '/login', '/signup', '/reset-password', '/courses', '/practice',
   '/marketplace', '/meet-your-tutor', '/pilot', '/compare',
   '/service-standards', '/support', '/research', '/terms', '/privacy',
-  '/billing', '/learning', '/offline', '/auth/callback',
+  '/billing', '/learning', '/offline', '/auth/callback', '/about', '/careers',
 ]);
 
 // Requires a paid order or active subscription (or staff), checked via the

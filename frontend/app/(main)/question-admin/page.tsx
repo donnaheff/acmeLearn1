@@ -1,15 +1,23 @@
 import { getSessionProfile } from '@/lib/session';
 import { createClient } from '@/lib/supabase/server';
 import { QuestionForm } from './QuestionForm';
+import { QuestionCsvImport } from './QuestionCsvImport';
+import { AssessmentVersionPanel, type AssessmentVersion } from './AssessmentVersionPanel';
 
 export default async function QuestionAdminPage() {
   const profile = await getSessionProfile();
   const supabase = await createClient();
-  const { data: questions } = await supabase
-    .from('question_items')
-    .select('id,skill,question_type,difficulty,version,license_source,status')
-    .order('created_at', { ascending: false })
-    .limit(25);
+  const [{ data: questions }, { data: versions }] = await Promise.all([
+    supabase
+      .from('question_items')
+      .select('id,skill,question_type,difficulty,version,license_source,status')
+      .order('created_at', { ascending: false })
+      .limit(25),
+    supabase
+      .from('assessment_versions')
+      .select('id,title,exam_type,version,status,time_limit_minutes')
+      .order('version', { ascending: false }),
+  ]);
 
   return (
     <>
@@ -26,7 +34,7 @@ export default async function QuestionAdminPage() {
             <div className="panel">
               <div className="section-head" style={{ marginBottom: 10 }}>
                 <h3>Question inventory</h3>
-                <button className="btn btn-outline">Import reviewed CSV</button>
+                {profile && <QuestionCsvImport profile={profile} />}
               </div>
               <table className="data-table">
                 <thead>
@@ -67,15 +75,7 @@ export default async function QuestionAdminPage() {
                 </tbody>
               </table>
             </div>
-            <div className="panel" style={{ marginTop: 20 }}>
-              <span className="eyebrow">Mock versions</span>
-              <h3 style={{ margin: '8px 0' }}>Academic Mock A</h3>
-              <p style={{ color: 'var(--muted)' }}>40 listening · 40 reading · 2 writing · speaking set 04</p>
-              <div className="course-foot">
-                <span className="status">Version 4 published</span>
-                <button className="btn btn-dark">Create version 5</button>
-              </div>
-            </div>
+            <AssessmentVersionPanel versions={(versions ?? []) as AssessmentVersion[]} />
           </section>
           <aside>{profile && <QuestionForm profile={profile} />}</aside>
         </div>

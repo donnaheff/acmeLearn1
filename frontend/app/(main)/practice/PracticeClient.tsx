@@ -1,15 +1,16 @@
-'use client';
+import Link from 'next/link';
 
-import { useToast } from '@/components/ToastProvider';
+function nextSaturday() {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + ((6 - d.getUTCDay() + 7) % 7 || 7));
+  return d;
+}
 
-export function PracticeClient({ isSignedIn }: { isSignedIn: boolean }) {
-  const toast = useToast();
-
-  function start(e: React.MouseEvent) {
-    e.preventDefault();
-    toast(isSignedIn ? 'Practice added to your study plan' : 'Create a free account to save this activity');
-  }
-
+export function PracticeClient() {
+  const sessionDate = nextSaturday();
+  const formatted = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', timeZone: 'Africa/Lagos' }).format(
+    sessionDate,
+  );
   return (
     <>
       <header className="page-hero" style={{ background: '#dcefeb' }}>
@@ -21,9 +22,9 @@ export function PracticeClient({ isSignedIn }: { isSignedIn: boolean }) {
             Timed mocks, focused drills and instant explanations. Every result updates your
             strengths, gaps and next best activity.
           </p>
-          <a className="btn btn-dark practice-start" href="#" style={{ marginTop: 16 }} onClick={start}>
+          <Link className="btn btn-dark practice-start" href="/learning" style={{ marginTop: 16 }}>
             Start a free diagnostic →
-          </a>
+          </Link>
         </div>
       </header>
       <main className="section">
@@ -36,34 +37,34 @@ export function PracticeClient({ isSignedIn }: { isSignedIn: boolean }) {
             <p>Based on common score gaps for learners targeting Band 7 and above.</p>
           </div>
           <div className="cards-4">
-            <a href="#" className="skill-card practice-start" onClick={start}>
+            <Link href="/learning" className="skill-card practice-start">
               <span className="card-num">FREE · 40 MIN</span>
               <span className="card-icon">◖))</span>
               <h3>Listening diagnostic</h3>
               <p>20 adaptive questions across all four test sections.</p>
               <span className="arrow">Start →</span>
-            </a>
-            <a href="#" className="skill-card practice-start" onClick={start}>
+            </Link>
+            <Link href="/learning" className="skill-card practice-start">
               <span className="card-num">TIMED · 20 MIN</span>
               <span className="card-icon">▤</span>
               <h3>Reading: Headings</h3>
               <p>Master one of the most challenging Academic question types.</p>
               <span className="arrow">Start →</span>
-            </a>
-            <a href="#" className="skill-card practice-start" onClick={start}>
+            </Link>
+            <Link href="/writing" className="skill-card practice-start">
               <span className="card-num">AI REVIEW · 40 MIN</span>
               <span className="card-icon">✎</span>
               <h3>Writing Task 2</h3>
               <p>Write a full essay and receive criterion-level feedback.</p>
               <span className="arrow">Start →</span>
-            </a>
-            <a href="#" className="skill-card practice-start" onClick={start}>
+            </Link>
+            <Link href="/speaking" className="skill-card practice-start">
               <span className="card-num">RECORDED · 15 MIN</span>
               <span className="card-icon">◎</span>
               <h3>Speaking Part 2</h3>
               <p>Record a two-minute response and analyse your fluency.</p>
               <span className="arrow">Start →</span>
-            </a>
+            </Link>
           </div>
         </div>
       </main>
@@ -77,9 +78,9 @@ export function PracticeClient({ isSignedIn }: { isSignedIn: boolean }) {
                 Sit all four skills in realistic timing and receive a detailed estimated-band
                 report within 24 hours.
               </p>
-              <button className="btn btn-coral practice-start" onClick={start}>
+              <Link className="btn btn-coral practice-start" href="/mock">
                 Book my mock →
-              </button>
+              </Link>
             </div>
             <div className="promo-side">
               <span className="eyebrow" style={{ color: 'white' }}>
@@ -89,13 +90,13 @@ export function PracticeClient({ isSignedIn }: { isSignedIn: boolean }) {
                 Saturday
               </div>
               <p>
-                18 July · 9:00 AM WAT
+                {formatted} · 9:00 AM WAT
                 <br />
                 Online · 2h 45m
               </p>
-              <button className="btn practice-start" onClick={start}>
+              <Link className="btn practice-start" href="/lectures">
                 Reserve free place
-              </button>
+              </Link>
             </div>
           </div>
         </div>
