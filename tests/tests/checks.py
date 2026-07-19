@@ -128,7 +128,7 @@ EXPECTED_FUNCTIONS = (
 for fn in EXPECTED_FUNCTIONS:
     check((functions / fn / 'index.ts').exists(), f'Missing Edge Function: supabase/functions/{fn}/index.ts')
 
-# --- PWA basics still present after the install-prompt removal ------------
+# --- PWA basics ------------------------------------------------------------
 check((frontend / 'public' / 'manifest.webmanifest').exists(), 'manifest.webmanifest must exist')
 check((frontend / 'public' / 'sw.js').exists(), 'sw.js must exist')
 check(
@@ -136,8 +136,8 @@ check(
     'ServiceWorkerRegistration.tsx must exist to register the service worker',
 )
 check(
-    not (frontend / 'components' / 'InstallBanner.tsx').exists(),
-    'InstallBanner.tsx should have been removed',
+    (frontend / 'components' / 'InstallBanner.tsx').exists(),
+    'InstallBanner.tsx must exist (re-enabled, dismissible install prompt)',
 )
 
 if errors:
